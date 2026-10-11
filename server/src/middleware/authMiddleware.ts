@@ -1,0 +1,44 @@
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { env } from '../config/env';
+import { Admin, IAdmin } from '../models/Admin';
+import { sendError } from '../utils/apiResponse';
+
+export interface AuthenticatedRequest extends Request {
+  user?: IAdmin;
+}
+
+export const authenticateAdmin = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    let token: string | undefined;
+
+    // Check Authorization header: Bearer <token>
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      sendError(res, 'Authentication required. No token provided.', 401, 'Unauthorized');
+      return;
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, env.JWT_SECRET) as { id: string; email: string };
+
+    // Find admin user in database
+    const admin = await Admin.findById(decoded.id).select('-passwordHash');
+    if (!admin) {
+      sendError(res, 'The administrator account associated with this token no longer exists.', 401, 'Unauthorized');
+      return;
+    }
+
+    req.user = admin;
+    next();
+  } catch (error: any) {
+    sendError(res, 'Invalid or expired authentication token.', 401, 'Unauthorized');
+  }
+};

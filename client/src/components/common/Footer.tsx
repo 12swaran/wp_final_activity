@@ -1,0 +1,115 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Sparkles, Heart, Shield, Lock } from 'lucide-react';
+
+export const Footer: React.FC = () => {
+  return (
+    <footer className="border-t border-border bg-card/40 pt-16 pb-12 text-sm text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-4 pb-12 border-b border-border">
+          {/* Col 1: Brand & Bio */}
+          <div className="md:col-span-1 space-y-4">
+            <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/20 text-primary border border-primary/30">
+                <Sparkles className="h-3.5 w-3.5" />
+              </span>
+              <span>
+                Teja<span className="text-primary font-black">.</span>Studio
+              </span>
+            </Link>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Bespoke, high-performance websites for startups and small businesses. Live in days, not months, without the big price tag.
+            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Accepting new client projects</span>
+            </div>
+          </div>
+
+          {/* Col 2: Navigation */}
+          <div>
+            <h4 className="font-display text-sm font-semibold text-white uppercase tracking-wider mb-4">Explore</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <Link to="/services" className="hover:text-primary transition-colors">Services & Offerings</Link>
+              </li>
+              <li>
+                <Link to="/portfolio" className="hover:text-primary transition-colors">Portfolio & Results</Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="hover:text-primary transition-colors">Transparent Pricing</Link>
+              </li>
+              <li>
+                <Link to="/reviews" className="hover:text-primary transition-colors">Client Testimonials</Link>
+              </li>
+              <li>
+                <Link to="/blog" className="hover:text-primary transition-colors">Articles & Strategy</Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 3: Work & Connect */}
+          <div>
+            <h4 className="font-display text-sm font-semibold text-white uppercase tracking-wider mb-4">Start Here</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li>
+                <Link to="/quote" className="hover:text-primary transition-colors">Request a Quote</Link>
+              </li>
+              <li>
+                <Link to="/book" className="hover:text-primary transition-colors">Book 30-Min Call</Link>
+              </li>
+              <li>
+                <Link to="/faqs" className="hover:text-primary transition-colors">Frequently Asked Questions</Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-primary transition-colors">Direct Inquiry Form</Link>
+              </li>
+              <li>
+                <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  WhatsApp Direct Chat
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 4: Trust & Legal */}
+          <div>
+            <h4 className="font-display text-sm font-semibold text-white uppercase tracking-wider mb-4">Guarantees</h4>
+            <ul className="space-y-2.5 text-xs">
+              <li className="flex items-center gap-2">
+                <Shield className="h-3.5 w-3.5 text-primary" />
+                <span>100% Code Ownership</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Heart className="h-3.5 w-3.5 text-rose-500" />
+                <span>Revision Guarantee</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Lock className="h-3.5 w-3.5 text-emerald-500" />
+                <span>Secure SSL & Performance</span>
+              </li>
+              <li className="pt-2">
+                <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                {' • '}
+                <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-4 text-xs text-muted-foreground md:flex-row">
+          <p>© {new Date().getFullYear()} Teja Web Studio. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="hover:text-white">Privacy</Link>
+            <Link to="/terms" className="hover:text-white">Terms</Link>
+            <span className="text-border">|</span>
+            <Link to="/admin/login" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <Lock className="h-3 w-3" /> Admin Portal
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
