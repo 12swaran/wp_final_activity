@@ -4,8 +4,8 @@ import { Lock, Mail, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLoginPage: React.FC = () => {
-  const [email, setEmail] = useState('admin@tejastudio.com');
-  const [password, setPassword] = useState('AdminPassword123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,10 +35,13 @@ export const AdminLoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-6 bg-background relative overflow-hidden">
       <div className="hero-grid absolute inset-0 pointer-events-none"></div>
 
-      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 md:p-10 shadow-2xl relative z-10 animate-fade-in">
+      <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl border border-border bg-card p-8 md:p-10 shadow-2xl relative z-10 animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white mb-4">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white mb-4"
+          >
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-primary border border-primary/30">
               <Sparkles className="h-4 w-4" />
             </span>
@@ -47,14 +50,9 @@ export const AdminLoginPage: React.FC = () => {
             </span>
           </Link>
           <h1 className="text-2xl font-bold text-white">Administrator Portal</h1>
-          <p className="text-xs text-muted-foreground mt-1">Sign in with your secure administrator credentials</p>
-        </div>
-
-        {/* Demo Helper Box */}
-        <div className="mb-6 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-xs text-muted-foreground">
-          <p className="font-semibold text-white mb-1">Pre-filled Evaluation Credentials:</p>
-          <p>Email: <span className="text-primary font-mono">admin@tejastudio.com</span></p>
-          <p>Password: <span className="text-primary font-mono">AdminPassword123!</span></p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Sign in with your secure administrator credentials
+          </p>
         </div>
 
         {error && (
@@ -66,10 +64,16 @@ export const AdminLoginPage: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-white mb-1.5">Admin Email</label>
+            <label
+              htmlFor="AdminLoginPage-associated-0"
+              className="block text-xs font-medium text-white mb-1.5"
+            >
+              Admin Email
+            </label>
             <div className="relative">
               <Mail className="h-4 w-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
+                id="AdminLoginPage-associated-0"
                 type="email"
                 required
                 value={email}
@@ -81,10 +85,16 @@ export const AdminLoginPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-white mb-1.5">Password</label>
+            <label
+              htmlFor="AdminLoginPage-associated-1"
+              className="block text-xs font-medium text-white mb-1.5"
+            >
+              Password
+            </label>
             <div className="relative">
               <Lock className="h-4 w-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
+                id="AdminLoginPage-associated-1"
                 type="password"
                 required
                 value={password}

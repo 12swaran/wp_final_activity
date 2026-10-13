@@ -10,12 +10,15 @@ export const ChatWidget: React.FC = () => {
     sendMessage,
     isLoading,
     clientName,
+    clientEmail,
+    setClientEmail,
     setClientName,
     unreadCount,
   } = useChat();
 
   const [input, setInput] = useState('');
-  const [showNamePrompt, setShowNamePrompt] = useState(!clientName);
+  const [showNamePrompt, setShowNamePrompt] = useState(!clientName || !clientEmail);
+  const [tempEmail, setTempEmail] = useState(clientEmail);
   const [tempName, setTempName] = useState(clientName);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -30,20 +33,25 @@ export const ChatWidget: React.FC = () => {
     if (!input.trim() || isLoading) return;
 
     const text = input;
-    setInput('');
-    await sendMessage(text);
+    try {
+      await sendMessage(text);
+      setInput('');
+    } catch {
+      /* Preserve the draft; the error notice explains the failure. */
+    }
   };
 
   const handleSaveName = (e: React.FormEvent) => {
     e.preventDefault();
     if (tempName.trim()) {
       setClientName(tempName.trim());
+      setClientEmail(tempEmail.trim());
       setShowNamePrompt(false);
     }
   };
 
   const handleQuickQuestion = (question: string) => {
-    sendMessage(question);
+    sendMessage(question).catch(() => {});
   };
 
   return (
@@ -71,7 +79,7 @@ export const ChatWidget: React.FC = () => {
 
       {/* Expanded Chat Box Window */}
       {isOpen && (
-        <div className="flex flex-col w-[360px] sm:w-[400px] h-[520px] rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-fade-in">
+        <div className="flex flex-col w-[min(400px,calc(100vw-3rem))] h-[min(520px,calc(100dvh-5rem))] rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-fade-in">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-secondary/60 px-5 py-3.5 backdrop-blur-md">
             <div className="flex items-center gap-3">
@@ -97,15 +105,34 @@ export const ChatWidget: React.FC = () => {
 
           {/* Guest Name Prompt Bar */}
           {showNamePrompt && (
-            <form onSubmit={handleSaveName} className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center gap-2">
+            <form
+              onSubmit={handleSaveName}
+              className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex flex-wrap items-center gap-2"
+            >
+              <label className="text-xs" htmlFor="chat-email">
+                Email
+              </label>
+              <input
+                id="chat-email"
+                type="email"
+                required
+                value={tempEmail}
+                onChange={(e) => setTempEmail(e.target.value)}
+                className="bg-secondary rounded-lg px-3 py-2 text-xs w-full"
+              />
               <input
                 type="text"
+                aria-label="Your name"
+                required
                 placeholder="Your name for this chat..."
                 value={tempName}
                 onChange={(e) => setTempName(e.target.value)}
                 className="flex-1 bg-background/80 border border-border rounded-lg px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
               />
-              <button type="submit" className="text-xs bg-primary px-3 py-1 rounded-lg text-white font-medium hover:bg-primary-hover">
+              <button
+                type="submit"
+                className="text-xs bg-primary px-3 py-1 rounded-lg text-white font-medium hover:bg-primary-hover"
+              >
                 Save
               </button>
             </form>
@@ -140,7 +167,10 @@ export const ChatWidget: React.FC = () => {
                         isAdmin ? 'text-muted-foreground' : 'text-primary-light'
                       }`}
                     >
-                      {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.sentAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
                 </div>
@@ -166,7 +196,10 @@ export const ChatWidget: React.FC = () => {
           </div>
 
           {/* Chat Input Field */}
-          <form onSubmit={handleSubmit} className="border-t border-border bg-card p-3 flex items-center gap-2">
+          <form
+            onSubmit={handleSubmit}
+            className="border-t border-border bg-card p-3 flex items-center gap-2"
+          >
             <input
               type="text"
               value={input}

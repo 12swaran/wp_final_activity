@@ -1,3 +1,6 @@
+import { Field as ListSearch, Pagination as ListPages } from '../../components/common/Forms';
+import { api } from '../../services/api';
+import { Field, UploadField } from '../../components/common/Forms';
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, X, Eye, BookOpen, Clock } from 'lucide-react';
 import { BlogPost } from '../../types';
@@ -5,11 +8,16 @@ import { blogApi } from '../../services/api';
 
 export const AdminBlogPage: React.FC = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [listPage, setListPage] = useState(1),
+    [listPages, setListPages] = useState(1),
+    [listSearch, setListSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [seoTitle, setSeoTitle] = useState(''),
+    [seoDescription, setSeoDescription] = useState('');
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
@@ -22,23 +30,29 @@ export const AdminBlogPage: React.FC = () => {
 
   const fetchPosts = () => {
     setLoading(true);
-    blogApi
-      .getAllAdmin()
-      .then((data) => setPosts(data || []))
+    api
+      .get('/blog/admin/all', { params: { page: listPage, limit: 20, search: listSearch } })
+      .then((res) => {
+        setPosts(res.data.data || []);
+        setListPages(res.data.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
-
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [listPage, listSearch]);
 
   const openCreate = () => {
     setEditingId(null);
+    setSeoTitle('');
+    setSeoDescription('');
     setTitle('');
     setSummary('');
     setContent('## Introduction\n\nWrite your article content here...');
-    setCoverImage('https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80');
+    setCoverImage(
+      'https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&w=1200&q=80',
+    );
     setAuthor('Teja Web Studio');
     setTagsText('Web Design, Strategy, Small Business');
     setReadTimeMinutes(5);
@@ -48,6 +62,8 @@ export const AdminBlogPage: React.FC = () => {
 
   const openEdit = (p: BlogPost) => {
     setEditingId(p._id);
+    setSeoTitle(p.seoTitle || '');
+    setSeoDescription(p.seoDescription || '');
     setTitle(p.title);
     setSummary(p.summary);
     setContent(p.content);
@@ -70,6 +86,8 @@ export const AdminBlogPage: React.FC = () => {
       .filter(Boolean);
 
     const payload = {
+      seoTitle,
+      seoDescription,
       title: title.trim(),
       summary: summary.trim(),
       content: content.trim(),
@@ -108,10 +126,21 @@ export const AdminBlogPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ListSearch
+        label="Search records"
+        value={listSearch}
+        onChange={(value) => {
+          setListSearch(value);
+          setListPage(1);
+        }}
+      />
+      <ListPages page={listPage} totalPages={listPages} onChange={setListPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Blog &amp; Articles CMS</h1>
-          <p className="text-xs text-muted-foreground mt-1">Publish insightful articles, tutorials, and strategy guides.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Publish insightful articles, tutorials, and strategy guides.
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -145,7 +174,9 @@ export const AdminBlogPage: React.FC = () => {
                   <tr key={post._id} className="hover:bg-secondary/30 transition-colors">
                     <td className="py-4 px-5">
                       <p className="font-bold text-white">{post.title}</p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 max-w-sm">{post.summary}</p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-1 max-w-sm">
+                        {post.summary}
+                      </p>
                     </td>
                     <td className="py-4 px-5 text-muted-foreground">{post.author}</td>
                     <td className="py-4 px-5 text-muted-foreground">{post.readTimeMinutes} min</td>
@@ -189,9 +220,19 @@ export const AdminBlogPage: React.FC = () => {
 
       {/* Article Editor Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto"
+        >
           <div className="w-full max-w-2xl rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative my-8">
-            <button onClick={() => setModalOpen(false)} className="absolute top-5 right-5 text-muted-foreground hover:text-white">
+            <button
+              data-dialog-close
+              aria-label="Close"
+              onClick={() => setModalOpen(false)}
+              className="absolute top-5 right-5 text-muted-foreground hover:text-white"
+            >
               <X className="h-5 w-5" />
             </button>
             <h3 className="text-lg font-bold text-white mb-4">
@@ -199,12 +240,24 @@ export const AdminBlogPage: React.FC = () => {
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <UploadField
+                label="Article cover image"
+                onUploaded={(file) => setCoverImage(file.url)}
+              />
+              <Field label="SEO title" value={seoTitle} onChange={setSeoTitle} />
+              <Field label="SEO description" value={seoDescription} onChange={setSeoDescription} />
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Article Title *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminBlogPage-field-0"
+                >
+                  Article Title *
+                </label>
                 <input
                   type="text"
                   required
                   value={title}
+                  id="AdminBlogPage-field-0"
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="5 Reasons Your Business Needs a Fast Site..."
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -212,11 +265,17 @@ export const AdminBlogPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Summary / Excerpt *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminBlogPage-field-1"
+                >
+                  Summary / Excerpt *
+                </label>
                 <textarea
                   rows={2}
                   required
                   value={summary}
+                  id="AdminBlogPage-field-1"
                   onChange={(e) => setSummary(e.target.value)}
                   placeholder="Brief 1-2 sentence teaser for cards and search snippets..."
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none"
@@ -225,20 +284,32 @@ export const AdminBlogPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Cover Image URL</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminBlogPage-field-2"
+                  >
+                    Cover Image URL
+                  </label>
                   <input
                     type="url"
                     value={coverImage}
+                    id="AdminBlogPage-field-2"
                     onChange={(e) => setCoverImage(e.target.value)}
                     placeholder="https://images.unsplash.com/..."
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Estimated Read Time (Mins)</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminBlogPage-field-3"
+                  >
+                    Estimated Read Time (Mins)
+                  </label>
                   <input
                     type="number"
                     value={readTimeMinutes}
+                    id="AdminBlogPage-field-3"
                     onChange={(e) => setReadTimeMinutes(Number(e.target.value))}
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono"
                   />
@@ -246,10 +317,16 @@ export const AdminBlogPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Tags (comma separated)</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminBlogPage-field-4"
+                >
+                  Tags (comma separated)
+                </label>
                 <input
                   type="text"
                   value={tagsText}
+                  id="AdminBlogPage-field-4"
                   onChange={(e) => setTagsText(e.target.value)}
                   placeholder="Web Design, Speed, SEO"
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -257,11 +334,17 @@ export const AdminBlogPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Article Content (Markdown) *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminBlogPage-field-5"
+                >
+                  Article Content (Markdown) *
+                </label>
                 <textarea
                   rows={8}
                   required
                   value={content}
+                  id="AdminBlogPage-field-5"
                   onChange={(e) => setContent(e.target.value)}
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none font-mono"
                 ></textarea>
@@ -282,6 +365,8 @@ export const AdminBlogPage: React.FC = () => {
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
+                  data-dialog-close
+                  aria-label="Close"
                   onClick={() => setModalOpen(false)}
                   className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold text-muted-foreground hover:text-white"
                 >

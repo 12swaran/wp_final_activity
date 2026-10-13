@@ -1,14 +1,38 @@
+import { useSettings } from '../../context/SettingsContext';
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, Video, Download, ArrowRight, User } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Video,
+  Download,
+  ArrowRight,
+  User,
+} from 'lucide-react';
 import { appointmentsApi } from '../../services/api';
 import { TimeSlot } from '../../types';
 
 export const BookingPage: React.FC = () => {
+  const { settings } = useSettings();
+  const [requestKey] = useState(() => crypto.randomUUID());
   // Service selection
   const serviceOptions = [
-    { title: 'Discovery Consultation', duration: '30 mins', desc: 'Discuss your business needs, goals, and ideal website structure.' },
-    { title: 'Architecture & Technical Review', duration: '45 mins', desc: 'Deep dive into tech stack, database models, and integrations.' },
-    { title: 'Website Launch Kickoff', duration: '30 mins', desc: 'Pre-launch alignment on domain, hosting DNS, and analytics tags.' },
+    {
+      title: 'Discovery Consultation',
+      duration: '30 mins',
+      desc: 'Discuss your business needs, goals, and ideal website structure.',
+    },
+    {
+      title: 'Architecture & Technical Review',
+      duration: '45 mins',
+      desc: 'Deep dive into tech stack, database models, and integrations.',
+    },
+    {
+      title: 'Website Launch Kickoff',
+      duration: '30 mins',
+      desc: 'Pre-launch alignment on domain, hosting DNS, and analytics tags.',
+    },
   ];
 
   const [selectedService, setSelectedService] = useState(serviceOptions[0].title);
@@ -72,7 +96,7 @@ export const BookingPage: React.FC = () => {
 
     setBookingLoading(true);
     try {
-      const idempotencyKey = 'bk_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+      const idempotencyKey = requestKey;
       const appointment = await appointmentsApi.book({
         clientName: clientName.trim(),
         clientEmail: clientEmail.toLowerCase().trim(),
@@ -117,8 +141,8 @@ PRODID:-//Teja Web Studio//Discovery Call//EN
 BEGIN:VEVENT
 SUMMARY:${serviceType} - Teja Web Studio
 DESCRIPTION:Meeting link: ${meetingLink}
-DTSTART:${cleanDate}T${cleanStart}
-DTEND:${cleanDate}T${cleanEnd}
+DTSTART;TZID=${settings.timeZone}:${cleanDate}T${cleanStart}
+DTEND;TZID=${settings.timeZone}:${cleanDate}T${cleanEnd}
 LOCATION:${meetingLink}
 STATUS:CONFIRMED
 END:VEVENT
@@ -135,13 +159,33 @@ END:VCALENDAR`;
 
   return (
     <div className="pt-32 pb-24">
+      <p className="text-center text-sm mt-4">
+        Times are shown in {settings.timeZone}. Cancel or reschedule more than{' '}
+        {settings.cancellationHours} hours before your booking.
+      </p>
+      {confirmedBooking?.manageToken && (
+        <div className="mx-auto max-w-xl p-6 break-all">
+          <p>Save this private link to manage your booking:</p>
+          <a
+            href={`/manage-booking#${confirmedBooking.manageToken}`}
+            className="text-primary underline"
+          >
+            {window.location.origin}/manage-booking#{confirmedBooking.manageToken}
+          </a>
+        </div>
+      )}
       <div className="mx-auto max-w-5xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Live Scheduling</p>
-          <h1 className="text-4xl font-bold md:text-5xl text-white">Book a 30-Min Discovery Call</h1>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Live Scheduling
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl text-white">
+            Book a 30-Min Discovery Call
+          </h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Select a convenient date and time. Our calendar updates in real time to guarantee zero double bookings and instant confirmation.
+            Select a convenient date and time. Our calendar updates in real time to guarantee zero
+            double bookings and instant confirmation.
           </p>
         </div>
 
@@ -160,7 +204,7 @@ END:VCALENDAR`;
               </span>
               <h2 className="text-3xl font-bold text-white mt-1">You're on the Calendar!</h2>
               <p className="text-sm text-muted-foreground mt-2">
-                A calendar invitation and confirmation receipt has been emailed to{' '}
+                Your booking is saved with the contact email{' '}
                 <span className="text-white font-medium">{confirmedBooking.clientEmail}</span>.
               </p>
             </div>
@@ -177,7 +221,9 @@ END:VCALENDAR`;
               </div>
               <div className="flex items-center justify-between text-xs border-b border-border/60 pb-3">
                 <span className="text-muted-foreground">Time Slot:</span>
-                <span className="text-white font-semibold">{confirmedBooking.startTime} – {confirmedBooking.endTime}</span>
+                <span className="text-white font-semibold">
+                  {confirmedBooking.startTime} – {confirmedBooking.endTime}
+                </span>
               </div>
               <div className="flex items-center justify-between text-xs pt-1">
                 <span className="text-muted-foreground">Meeting Link:</span>
@@ -238,7 +284,9 @@ END:VCALENDAR`;
                       <span>{opt.title}</span>
                       <span className="text-[11px] font-normal text-primary">{opt.duration}</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{opt.desc}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                      {opt.desc}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -265,7 +313,8 @@ END:VCALENDAR`;
             <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 md:p-8 space-y-6">
               <div>
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" /> 3. Select an Open Slot for {selectedDate}
+                  <Clock className="h-4 w-4 text-primary" /> 3. Select an Open Slot for{' '}
+                  {selectedDate}
                 </h3>
 
                 {errorMessage && (
@@ -297,8 +346,8 @@ END:VCALENDAR`;
                             !slot.isAvailable
                               ? 'opacity-30 border-border bg-secondary/20 cursor-not-allowed line-through text-muted-foreground'
                               : isSelected
-                              ? 'bg-primary border-primary text-white shadow-glow'
-                              : 'bg-secondary border-border text-foreground hover:border-primary/50 hover:bg-secondary/80'
+                                ? 'bg-primary border-primary text-white shadow-glow'
+                                : 'bg-secondary border-border text-foreground hover:border-primary/50 hover:bg-secondary/80'
                           }`}
                         >
                           {slot.startTime}
@@ -317,24 +366,36 @@ END:VCALENDAR`;
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Your Full Name *</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="BookingPage-field-0"
+                    >
+                      Your Full Name *
+                    </label>
                     <input
                       type="text"
                       required
                       placeholder="Jane Doe"
                       value={clientName}
+                      id="BookingPage-field-0"
                       onChange={(e) => setClientName(e.target.value)}
                       className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Email Address *</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="BookingPage-field-1"
+                    >
+                      Email Address *
+                    </label>
                     <input
                       type="email"
                       required
                       placeholder="jane@company.com"
                       value={clientEmail}
+                      id="BookingPage-field-1"
                       onChange={(e) => setClientEmail(e.target.value)}
                       className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                     />
@@ -343,22 +404,34 @@ END:VCALENDAR`;
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Phone / WhatsApp</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="BookingPage-field-2"
+                    >
+                      Phone / WhatsApp
+                    </label>
                     <input
                       type="tel"
                       placeholder="+1 (555) 000-0000"
                       value={clientPhone}
+                      id="BookingPage-field-2"
                       onChange={(e) => setClientPhone(e.target.value)}
                       className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Notes / Questions</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="BookingPage-field-3"
+                    >
+                      Notes / Questions
+                    </label>
                     <input
                       type="text"
                       placeholder="Interested in E-commerce rebuild"
                       value={notes}
+                      id="BookingPage-field-3"
                       onChange={(e) => setNotes(e.target.value)}
                       className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                     />
@@ -374,7 +447,8 @@ END:VCALENDAR`;
                     <span>Securing Slot...</span>
                   ) : selectedSlot ? (
                     <>
-                      Confirm Call for {selectedSlot.startTime} <ArrowRight className="h-3.5 w-3.5" />
+                      Confirm Call for {selectedSlot.startTime}{' '}
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </>
                   ) : (
                     'Select a Time Slot Above to Continue'

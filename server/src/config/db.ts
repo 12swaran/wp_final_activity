@@ -9,8 +9,11 @@ export const connectDB = async (): Promise<void> => {
 
     console.log(`[Database] MongoDB Connected: ${conn.connection.host} (${conn.connection.name})`);
   } catch (error: any) {
-    console.error(`[Database Error] Failed to connect to MongoDB: ${error.message}`);
-    console.warn(`[Database Warning] Please ensure MongoDB is running locally or MONGODB_URI points to a valid MongoDB Atlas cluster in server/.env`);
+    // Do not continue into seeding or serve requests with a disconnected database.
+    // Driver errors may contain connection details; keep credentials out of logs.
+    throw new Error(
+      'MongoDB connection failed. Check server/.env, Atlas cluster readiness and the IP access list.',
+    );
   }
 };
 

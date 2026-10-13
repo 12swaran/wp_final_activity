@@ -1,3 +1,7 @@
+import { escapeRegex } from '../utils/security';
+import mongoose from 'mongoose';
+import { Upload } from '../models/Upload';
+import { hashToken } from '../utils/security';
 import { Request, Response } from 'express';
 import { QuotationRequest } from '../models/QuotationRequest';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -20,27 +24,82 @@ export const submitQuotation = async (req: Request, res: Response): Promise<void
     } = req.body;
 
     if (!name || !email || !projectType || !budgetRange || !timeline || !description) {
-      sendError(res, 'Name, email, project type, budget range, timeline, and description are required.', 400);
+      sendError(
+        res,
+        'Name, email, project type, budget range, timeline, and description are required.',
+        400,
+      );
       return;
     }
 
-    const quotation = await QuotationRequest.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone ? phone.trim() : '',
-      company: company ? company.trim() : '',
-      projectType,
-      budgetRange,
-      timeline,
-      requiredFeatures: Array.isArray(requiredFeatures) ? requiredFeatures : [],
-      description: description.trim(),
-      status: 'new',
-      idempotencyKey,
-    });
+    if (idempotencyKey) {
+      const previous = await QuotationRequest.findOne({ idempotencyKey });
+      if (previous) {
+        sendSuccess(res, { id: previous._id }, 'Quotation request already received.');
+        return;
+      }
+    }
+    const files = req.body.attachments || [];
+    if (new Set(files.map((file: any) => file.fileId)).size !== files.length) {
+      sendError(res, 'Duplicate attachment.', 400);
+      return;
+    }
+    const session = await mongoose.startSession();
+    let quotation: any;
+    try {
+      await session.withTransaction(async () => {
+        const owned = [];
+        for (const file of files) {
+          const record = await Upload.findOne({
+            _id: file.fileId,
+            claimHash: hashToken(file.token),
+            owner: { $exists: false },
+            visibility: 'private',
+          }).session(session);
+          if (!record)
+            throw Object.assign(new Error('Attachment is unavailable or already used.'), {
+              statusCode: 400,
+            });
+          owned.push(record);
+        }
+        [quotation] = await QuotationRequest.create(
+          [
+            {
+              name: name.trim(),
+              email: email.toLowerCase().trim(),
+              phone: phone ? phone.trim() : '',
+              company: company ? company.trim() : '',
+              projectType,
+              budgetRange,
+              timeline,
+              requiredFeatures: Array.isArray(requiredFeatures) ? requiredFeatures : [],
+              description: description.trim(),
+              status: 'new',
+              businessType: req.body.businessType,
+              attachments: files.map((file: any) => file.fileId),
+              idempotencyKey,
+            },
+          ],
+          { session },
+        );
+        for (const record of owned) {
+          record.owner = quotation._id;
+          record.expiresAt = undefined;
+          await record.save({ session });
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
 
     // Send confirmation email to client
-    const confirmation = emailTemplates.quotationConfirmation(quotation.name, quotation.projectType, quotation.budgetRange);
+    const confirmation = emailTemplates.quotationConfirmation(
+      quotation.name,
+      quotation.projectType,
+      quotation.budgetRange,
+    );
     sendEmail({
+      referenceId: String(quotation._id),
       to: quotation.email,
       subject: confirmation.subject,
       html: confirmation.html,
@@ -49,21 +108,31 @@ export const submitQuotation = async (req: Request, res: Response): Promise<void
     // Send alert to admin
     const adminAlert = emailTemplates.adminNewNotification(
       'Quotation Request',
-      `Client: ${quotation.name} (${quotation.email})\nCompany: ${quotation.company || 'N/A'}\nPhone: ${quotation.phone || 'N/A'}\nProject: ${quotation.projectType}\nBudget: ${quotation.budgetRange}\nTimeline: ${quotation.timeline}\nFeatures: ${quotation.requiredFeatures.join(', ')}\nDescription: ${quotation.description}`
+      `Client: ${quotation.name} (${quotation.email})\nCompany: ${quotation.company || 'N/A'}\nPhone: ${quotation.phone || 'N/A'}\nProject: ${quotation.projectType}\nBudget: ${quotation.budgetRange}\nTimeline: ${quotation.timeline}\nFeatures: ${quotation.requiredFeatures.join(', ')}\nDescription: ${quotation.description}`,
     );
     sendEmail({
+      referenceId: String(quotation._id),
       to: env.ADMIN_NOTIFICATION_EMAIL,
       subject: adminAlert.subject,
       html: adminAlert.html,
     }).catch((err) => console.error('[Email Error] Admin notification failed:', err.message));
 
-    sendSuccess(res, { id: quotation._id }, 'Your quotation request has been received. We will prepare your proposal within 24-48 hours!', 201);
+    sendSuccess(
+      res,
+      { id: quotation._id },
+      'Your quotation request has been received. We will prepare your proposal within 24-48 hours!',
+      201,
+    );
   } catch (err: any) {
     if (err.code === 11000) {
-      sendSuccess(res, { message: 'Quotation request already received.' }, 'Your proposal request has already been recorded.');
+      sendSuccess(
+        res,
+        { message: 'Quotation request already received.' },
+        'Your proposal request has already been recorded.',
+      );
       return;
     }
-    sendError(res, err.message, 500);
+    sendError(res, err.message, err.statusCode || 500);
   }
 };
 
@@ -78,10 +147,10 @@ export const getQuotations = async (req: Request, res: Response): Promise<void> 
 
     if (search) {
       query.$or = [
-        { name: { $regex: String(search), $options: 'i' } },
-        { email: { $regex: String(search), $options: 'i' } },
-        { company: { $regex: String(search), $options: 'i' } },
-        { projectType: { $regex: String(search), $options: 'i' } },
+        { name: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { email: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { company: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { projectType: { $regex: escapeRegex(String(search)), $options: 'i' } },
       ];
     }
 
@@ -122,14 +191,18 @@ export const getQuotationById = async (req: Request, res: Response): Promise<voi
 export const updateQuotation = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { status, estimatedQuote, notes } = req.body;
+    const { status, estimatedQuote, notes, proposal } = req.body;
 
     const updateData: any = {};
     if (status) updateData.status = status;
     if (estimatedQuote !== undefined) updateData.estimatedQuote = Number(estimatedQuote);
     if (notes !== undefined) updateData.notes = notes;
+    if (proposal !== undefined) updateData.proposal = proposal;
 
-    const quotation = await QuotationRequest.findByIdAndUpdate(id, updateData, { new: true });
+    const quotation = await QuotationRequest.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!quotation) {
       sendError(res, 'Quotation not found.', 404);
       return;

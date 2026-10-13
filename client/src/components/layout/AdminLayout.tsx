@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Inbox,
@@ -29,14 +29,26 @@ export const AdminLayout: React.FC = () => {
 
   // Protected route check
   if (!isLoading && !isAuthenticated) {
-    navigate('/admin/login', { replace: true });
-    return null;
+    return <Navigate to="/admin/login" replace />;
   }
 
   const navItems = [
+    {
+      label: 'Client Projects',
+      path: '/admin/client-projects',
+      icon: <Briefcase className="h-4 w-4" />,
+    },
+    { label: 'Notifications', path: '/admin/notifications', icon: <Inbox className="h-4 w-4" /> },
+    ...(admin?.role === 'superadmin'
+      ? [{ label: 'Admin Accounts', path: '/admin/users', icon: <Settings className="h-4 w-4" /> }]
+      : []),
     { label: 'Dashboard', path: '/admin/dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
     { label: 'Inquiries', path: '/admin/inquiries', icon: <Inbox className="h-4 w-4" /> },
-    { label: 'Quotations', path: '/admin/quotations', icon: <FileSpreadsheet className="h-4 w-4" /> },
+    {
+      label: 'Quotations',
+      path: '/admin/quotations',
+      icon: <FileSpreadsheet className="h-4 w-4" />,
+    },
     { label: 'Appointments', path: '/admin/appointments', icon: <Calendar className="h-4 w-4" /> },
     { label: 'Customer Chats', path: '/admin/chats', icon: <MessageSquare className="h-4 w-4" /> },
     { label: 'Services', path: '/admin/services', icon: <Layers className="h-4 w-4" /> },
@@ -45,7 +57,9 @@ export const AdminLayout: React.FC = () => {
     { label: 'Testimonials', path: '/admin/testimonials', icon: <Star className="h-4 w-4" /> },
     { label: 'Blog CMS', path: '/admin/blog', icon: <BookOpen className="h-4 w-4" /> },
     { label: 'FAQs', path: '/admin/faqs', icon: <HelpCircle className="h-4 w-4" /> },
-    { label: 'Settings', path: '/admin/settings', icon: <Settings className="h-4 w-4" /> },
+    ...(admin?.role === 'superadmin'
+      ? [{ label: 'Settings', path: '/admin/settings', icon: <Settings className="h-4 w-4" /> }]
+      : []),
   ];
 
   const handleLogout = () => {
@@ -65,7 +79,9 @@ export const AdminLayout: React.FC = () => {
             <Sparkles className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="font-display text-sm font-bold text-white tracking-tight">Studio Admin</h2>
+            <h2 className="font-display text-sm font-bold text-white tracking-tight">
+              Studio Admin
+            </h2>
             <span className="text-[10px] text-primary font-medium">Control Center</span>
           </div>
         </div>
@@ -95,7 +111,9 @@ export const AdminLayout: React.FC = () => {
         <div className="p-4 border-t border-border">
           <div className="flex items-center justify-between mb-3 px-2">
             <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">{admin?.fullName || 'Studio Admin'}</p>
+              <p className="text-xs font-bold text-white truncate">
+                {admin?.fullName || 'Studio Admin'}
+              </p>
               <p className="text-[10px] text-muted-foreground truncate">{admin?.email}</p>
             </div>
             <button
@@ -131,7 +149,8 @@ export const AdminLayout: React.FC = () => {
               {mobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Authenticated as: <strong className="text-white font-medium">{admin?.role || 'Administrator'}</strong>
+              Authenticated as:{' '}
+              <strong className="text-white font-medium">{admin?.role || 'Administrator'}</strong>
             </span>
           </div>
 

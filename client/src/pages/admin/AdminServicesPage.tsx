@@ -1,10 +1,28 @@
+import { Field as ListSearch, Pagination as ListPages } from '../../components/common/Forms';
+import { api } from '../../services/api';
+import { Field } from '../../components/common/Forms';
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, X, Check, Globe, Smartphone, Zap, Search, Code, Rocket } from 'lucide-react';
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  Check,
+  Globe,
+  Smartphone,
+  Zap,
+  Search,
+  Code,
+  Rocket,
+} from 'lucide-react';
 import { Service } from '../../types';
 import { servicesApi } from '../../services/api';
 
 export const AdminServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [listPage, setListPage] = useState(1),
+    [listPages, setListPages] = useState(1),
+    [listSearch, setListSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Modal State
@@ -16,6 +34,7 @@ export const AdminServicesPage: React.FC = () => {
   const [icon, setIcon] = useState('Globe');
   const [deliverablesText, setDeliverablesText] = useState('');
   const [startingPrice, setStartingPrice] = useState<number>(199);
+  const [isPublished, setIsPublished] = useState(true);
   const [isFeatured, setIsFeatured] = useState(true);
   const [orderIndex, setOrderIndex] = useState<number>(0);
   const [submitting, setSubmitting] = useState(false);
@@ -24,19 +43,22 @@ export const AdminServicesPage: React.FC = () => {
 
   const fetchServices = () => {
     setLoading(true);
-    servicesApi
-      .getAll()
-      .then((data) => setServices(data || []))
+    api
+      .get('/services/admin/all', { params: { page: listPage, limit: 20, search: listSearch } })
+      .then((res) => {
+        setServices(res.data.data || []);
+        setListPages(res.data.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
-
   useEffect(() => {
     fetchServices();
-  }, []);
+  }, [listPage, listSearch]);
 
   const openCreate = () => {
     setEditingId(null);
+    setIsPublished(true);
     setTitle('');
     setShortDescription('');
     setFullDescription('');
@@ -50,6 +72,7 @@ export const AdminServicesPage: React.FC = () => {
 
   const openEdit = (serv: Service) => {
     setEditingId(serv._id);
+    setIsPublished(serv.isPublished !== false);
     setTitle(serv.title);
     setShortDescription(serv.shortDescription);
     setFullDescription(serv.fullDescription || '');
@@ -79,6 +102,7 @@ export const AdminServicesPage: React.FC = () => {
       deliverables,
       startingPrice: Number(startingPrice),
       isFeatured,
+      isPublished,
       orderIndex: Number(orderIndex),
     };
 
@@ -110,10 +134,21 @@ export const AdminServicesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ListSearch
+        label="Search records"
+        value={listSearch}
+        onChange={(value) => {
+          setListSearch(value);
+          setListPage(1);
+        }}
+      />
+      <ListPages page={listPage} totalPages={listPages} onChange={setListPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Services Management</h1>
-          <p className="text-xs text-muted-foreground mt-1">Configure offerings, deliverables checklists, and starting prices.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Configure offerings, deliverables checklists, and starting prices.
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -145,15 +180,23 @@ export const AdminServicesPage: React.FC = () => {
               <tbody className="divide-y divide-border">
                 {services.map((serv) => (
                   <tr key={serv._id} className="hover:bg-secondary/30 transition-colors">
-                    <td className="py-4 px-5 font-mono text-muted-foreground font-semibold">{serv.orderIndex}</td>
+                    <td className="py-4 px-5 font-mono text-muted-foreground font-semibold">
+                      {serv.orderIndex}
+                    </td>
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2.5">
-                        <span className="p-1.5 rounded-lg bg-secondary text-primary font-bold text-xs">{serv.icon}</span>
+                        <span className="p-1.5 rounded-lg bg-secondary text-primary font-bold text-xs">
+                          {serv.icon}
+                        </span>
                         <span className="font-bold text-white">{serv.title}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-5 text-muted-foreground max-w-sm truncate">{serv.shortDescription}</td>
-                    <td className="py-4 px-5 font-bold font-display text-white">${serv.startingPrice}</td>
+                    <td className="py-4 px-5 text-muted-foreground max-w-sm truncate">
+                      {serv.shortDescription}
+                    </td>
+                    <td className="py-4 px-5 font-bold font-display text-white">
+                      ${serv.startingPrice}
+                    </td>
                     <td className="py-4 px-5">
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -191,9 +234,19 @@ export const AdminServicesPage: React.FC = () => {
 
       {/* Add / Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto"
+        >
           <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative my-8">
-            <button onClick={() => setModalOpen(false)} className="absolute top-5 right-5 text-muted-foreground hover:text-white">
+            <button
+              data-dialog-close
+              aria-label="Close"
+              onClick={() => setModalOpen(false)}
+              className="absolute top-5 right-5 text-muted-foreground hover:text-white"
+            >
               <X className="h-5 w-5" />
             </button>
             <h3 className="text-lg font-bold text-white mb-4">
@@ -201,9 +254,23 @@ export const AdminServicesPage: React.FC = () => {
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-white mb-1">Service Title *</label>
+              <label className="flex gap-2">
                 <input
+                  type="checkbox"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                />{' '}
+                Published on the public website
+              </label>
+              <div>
+                <label
+                  htmlFor="AdminServicesPage-associated-0"
+                  className="block text-xs font-medium text-white mb-1"
+                >
+                  Service Title *
+                </label>
+                <input
+                  id="AdminServicesPage-associated-0"
                   type="text"
                   required
                   value={title}
@@ -215,22 +282,36 @@ export const AdminServicesPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Icon</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminServicesPage-field-0"
+                  >
+                    Icon
+                  </label>
                   <select
                     value={icon}
+                    id="AdminServicesPage-field-0"
                     onChange={(e) => setIcon(e.target.value)}
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                   >
                     {availableIcons.map((ic) => (
-                      <option key={ic} value={ic}>{ic}</option>
+                      <option key={ic} value={ic}>
+                        {ic}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Starting Price ($)</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminServicesPage-field-1"
+                  >
+                    Starting Price ($)
+                  </label>
                   <input
                     type="number"
                     value={startingPrice}
+                    id="AdminServicesPage-field-1"
                     onChange={(e) => setStartingPrice(Number(e.target.value))}
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono"
                   />
@@ -238,11 +319,17 @@ export const AdminServicesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Short Description *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminServicesPage-field-2"
+                >
+                  Short Description *
+                </label>
                 <input
                   type="text"
                   required
                   value={shortDescription}
+                  id="AdminServicesPage-field-2"
                   onChange={(e) => setShortDescription(e.target.value)}
                   placeholder="A clean, professional site that tells your story..."
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -250,10 +337,16 @@ export const AdminServicesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Deliverables (One per line)</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminServicesPage-field-3"
+                >
+                  Deliverables (One per line)
+                </label>
                 <textarea
                   rows={4}
                   value={deliverablesText}
+                  id="AdminServicesPage-field-3"
                   onChange={(e) => setDeliverablesText(e.target.value)}
                   placeholder="Custom multi-page UI architecture&#10;Mobile-responsive on all screen sizes&#10;Google Analytics setup"
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none font-mono"
@@ -262,10 +355,16 @@ export const AdminServicesPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Display Order</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminServicesPage-field-4"
+                  >
+                    Display Order
+                  </label>
                   <input
                     type="number"
                     value={orderIndex}
+                    id="AdminServicesPage-field-4"
                     onChange={(e) => setOrderIndex(Number(e.target.value))}
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono"
                   />
@@ -286,6 +385,8 @@ export const AdminServicesPage: React.FC = () => {
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
+                  data-dialog-close
+                  aria-label="Close"
                   onClick={() => setModalOpen(false)}
                   className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold text-muted-foreground hover:text-white"
                 >

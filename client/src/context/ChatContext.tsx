@@ -9,6 +9,8 @@ interface ChatContextType {
   messages: ChatMessage[];
   sendMessage: (text: string) => Promise<void>;
   isLoading: boolean;
+  clientEmail: string;
+  setClientEmail: (email: string) => void;
   clientName: string;
   setClientName: (name: string) => void;
   unreadCount: number;
@@ -23,13 +25,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [clientName, setClientName] = useState<string>(() => {
     return localStorage.getItem('studio_chat_name') || '';
   });
+  const [clientEmail, setClientEmail] = useState(
+    () => localStorage.getItem('studio_chat_email') || '',
+  );
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   // Generate or retrieve persistent sessionId
   const [sessionId] = useState<string>(() => {
     let id = localStorage.getItem('studio_chat_session_id');
-    if (!id) {
-      id = 'chat_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now();
+    if (!id || !/^[a-f0-9]{64}$/.test(id)) {
+      id = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map((value) => value.toString(16).padStart(2, '0'))
+        .join('');
       localStorage.setItem('studio_chat_session_id', id);
     }
     return id;
@@ -39,10 +46,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initial session startup
   useEffect(() => {
+    if (!clientName || !clientEmail) return;
     const initChat = async () => {
       try {
         const conv = await chatApi.initSession({
           sessionId,
+          clientEmail: clientEmail || undefined,
           clientName: clientName || undefined,
         });
         if (conv && conv.messages) {
@@ -55,10 +64,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initChat();
-  }, [sessionId]);
+  }, [sessionId, clientName, clientEmail]);
 
   // Periodic polling for incoming admin replies
   useEffect(() => {
+    if (!clientName || !clientEmail) return;
     const interval = setInterval(async () => {
       try {
         const msgs = await chatApi.getMessages(sessionId);
@@ -82,7 +92,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [sessionId, isOpen]);
+  }, [sessionId, isOpen, clientName, clientEmail]);
 
   const toggleChat = () => {
     setIsOpen((prev) => {
@@ -101,14 +111,24 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
+    if (!clientName || !clientEmail) {
+      window.dispatchEvent(
+        new CustomEvent('api-error', {
+          detail: 'Enter your name and email before sending a chat message.',
+        }),
+      );
+      throw new Error('Chat identity is required.');
+    }
 
     setIsLoading(true);
     try {
+      await chatApi.initSession({ sessionId, clientName, clientEmail });
       const newMsg = await chatApi.sendMessage(sessionId, text, clientName || undefined);
       setMessages((prev) => [...prev, newMsg]);
       lastMessageCountRef.current += 1;
     } catch (err) {
       console.error('[Chat] Failed to send message:', err);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +144,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sendMessage,
         isLoading,
         clientName,
+        clientEmail,
+        setClientEmail: (email: string) => {
+          setClientEmail(email);
+          localStorage.setItem('studio_chat_email', email);
+        },
         setClientName: handleSetClientName,
         unreadCount,
       }}

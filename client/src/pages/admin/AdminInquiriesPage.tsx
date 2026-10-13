@@ -1,3 +1,5 @@
+import { api } from '../../services/api';
+import { Pagination } from '../../components/common/Forms';
 import React, { useEffect, useState } from 'react';
 import { Search, Mail, Reply, Trash2, CheckCircle2, Clock, Archive } from 'lucide-react';
 import { Inquiry } from '../../types';
@@ -7,6 +9,8 @@ export const AdminInquiriesPage: React.FC = () => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1),
+    [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   // Reply modal
@@ -20,15 +24,22 @@ export const AdminInquiriesPage: React.FC = () => {
       .getAllAdmin({
         status: statusFilter === 'all' ? undefined : statusFilter,
         search: search || undefined,
-        limit: 50,
+        limit: 20,
+        page,
       })
-      .then((res) => setInquiries(res.data || []))
+      .then((res) => {
+        setInquiries(res.data || []);
+        setPages(res.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchInquiries();
+  }, [statusFilter, search, page]);
+  useEffect(() => {
+    setPage(1);
   }, [statusFilter, search]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -70,10 +81,30 @@ export const AdminInquiriesPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <button
+        className="underline"
+        onClick={async () => {
+          const response = await api.get('/inquiries/export', {
+            params: { search, status: statusFilter },
+            responseType: 'blob',
+          });
+          const url = URL.createObjectURL(response.data);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'inquiries.csv';
+          link.click();
+          URL.revokeObjectURL(url);
+        }}
+      >
+        Export matching inquiries as CSV
+      </button>
+      <Pagination page={page} totalPages={pages} onChange={setPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Inquiries &amp; Messages</h1>
-          <p className="text-xs text-muted-foreground mt-1">Manage contact submissions, track response statuses, and reply directly via email.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manage contact submissions, track response statuses, and reply directly via email.
+          </p>
         </div>
 
         {/* Status Filter Buttons */}
@@ -153,8 +184,8 @@ export const AdminInquiriesPage: React.FC = () => {
                           inq.status === 'new'
                             ? 'text-rose-400 border-rose-500/30'
                             : inq.status === 'in_progress'
-                            ? 'text-amber-400 border-amber-500/30'
-                            : 'text-emerald-400 border-emerald-500/30'
+                              ? 'text-amber-400 border-amber-500/30'
+                              : 'text-emerald-400 border-emerald-500/30'
                         }`}
                       >
                         <option value="new">New</option>
@@ -192,11 +223,18 @@ export const AdminInquiriesPage: React.FC = () => {
 
       {/* Email Reply Modal */}
       {selectedInquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in"
+        >
           <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-1">Reply to {selectedInquiry.name}</h3>
             <p className="text-xs text-muted-foreground mb-4">
-              Sending this will dispatch an email to <span className="text-white font-medium">{selectedInquiry.email}</span> and log it into inquiry history.
+              Sending this will dispatch an email to{' '}
+              <span className="text-white font-medium">{selectedInquiry.email}</span> and log it
+              into inquiry history.
             </p>
 
             <div className="mb-4 rounded-xl border border-border bg-secondary/50 p-3 text-xs text-muted-foreground">
@@ -206,11 +244,17 @@ export const AdminInquiriesPage: React.FC = () => {
 
             <form onSubmit={handleSendReply} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Your Email Response *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminInquiriesPage-field-0"
+                >
+                  Your Email Response *
+                </label>
                 <textarea
                   required
                   rows={6}
                   value={replyText}
+                  id="AdminInquiriesPage-field-0"
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Hi there, thanks for reaching out. We would be glad to help with your project..."
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none"

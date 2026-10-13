@@ -1,5 +1,7 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
+  manageAppointment,
+  rotateAppointmentCode,
   getAvailableSlots,
   bookAppointment,
   getAppointmentsAdmin,
@@ -10,9 +12,11 @@ import { authenticateAdmin } from '../middleware/authMiddleware';
 import { formSubmissionRateLimiter } from '../middleware/rateLimiter';
 import { checkHoneypotAndDuplicate } from '../middleware/idempotency';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes
+router.post('/manage', formSubmissionRateLimiter, manageAppointment);
+router.post('/:id/management-code', authenticateAdmin, rotateAppointmentCode);
 router.get('/available-slots', getAvailableSlots);
 router.post('/', formSubmissionRateLimiter, checkHoneypotAndDuplicate, bookAppointment);
 

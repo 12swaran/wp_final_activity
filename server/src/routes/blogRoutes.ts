@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
   getPublishedPosts,
   getPostBySlug,
@@ -9,7 +9,7 @@ import {
 } from '../controllers/blogController';
 import { authenticateAdmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes
 router.get('/', getPublishedPosts);

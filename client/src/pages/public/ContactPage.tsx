@@ -1,12 +1,19 @@
+import { useSettings } from '../../context/SettingsContext';
+import { Field } from '../../components/common/Forms';
 import React, { useState } from 'react';
 import { Mail, MessageCircle, Send, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { inquiriesApi } from '../../services/api';
 
 export const ContactPage: React.FC = () => {
+  const { settings } = useSettings();
+  const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    businessType: '',
+    service: '',
+    budget: '',
     subject: '',
     message: '',
     _hp_company: '', // Honeypot anti-spam
@@ -20,22 +27,42 @@ export const ContactPage: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.subject.trim() ||
+      !formData.message.trim()
+    ) {
       setError('Please fill in all required fields.');
       return;
     }
 
     setLoading(true);
     try {
-      const idempotencyKey = 'inq_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+      const idempotencyKey = requestKey;
       await inquiriesApi.submit({
         ...formData,
         idempotencyKey,
       });
       setSuccess(true);
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '', _hp_company: '' });
+      setRequestKey(crypto.randomUUID());
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        businessType: '',
+        service: '',
+        budget: '',
+        subject: '',
+        message: '',
+        _hp_company: '',
+      });
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to submit inquiry. Please try again.');
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          'Failed to submit inquiry. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -46,10 +73,15 @@ export const ContactPage: React.FC = () => {
       <div className="mx-auto max-w-5xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Get in Touch</p>
-          <h1 className="text-4xl font-bold md:text-5xl text-white">Let's Discuss Your Next Project</h1>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Get in Touch
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl text-white">
+            Let's Discuss Your Next Project
+          </h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Have a question, need a website quote, or looking for an expedited build? Send a note and receive a direct reply within 24 hours.
+            Have a question, need a website quote, or looking for an expedited build? Send a note
+            and receive a direct reply within 24 hours.
           </p>
         </div>
 
@@ -66,8 +98,11 @@ export const ContactPage: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block">Email Address</span>
-                  <a href="mailto:hello@tejastudio.com" className="text-sm font-semibold text-white hover:text-primary transition-colors">
-                    hello@tejastudio.com
+                  <a
+                    href={'mailto:' + settings.contactEmail}
+                    className="text-sm font-semibold text-white hover:text-primary transition-colors"
+                  >
+                    {settings.contactEmail}
                   </a>
                 </div>
               </div>
@@ -104,9 +139,12 @@ export const ContactPage: React.FC = () => {
 
             {/* Quick Assurance */}
             <div className="rounded-2xl border border-border bg-secondary/40 p-6">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Our Promise</h3>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
+                Our Promise
+              </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                We never outsource your development. You work directly with the architect building your site from the first message to final DNS launch.
+                We never outsource your development. You work directly with the architect building
+                your site from the first message to final DNS launch.
               </p>
             </div>
           </div>
@@ -120,7 +158,8 @@ export const ContactPage: React.FC = () => {
                 </div>
                 <h2 className="text-2xl font-bold text-white">Message Received!</h2>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Thank you for reaching out. We have logged your inquiry and sent an acknowledgment email. We'll be in touch within 24 hours.
+                  Thank you for reaching out. We have saved your inquiry. We'll be in touch within
+                  24 hours.
                 </p>
                 <button
                   onClick={() => setSuccess(false)}
@@ -140,6 +179,21 @@ export const ContactPage: React.FC = () => {
                   </div>
                 )}
 
+                <Field
+                  label="Business type"
+                  value={formData.businessType}
+                  onChange={(value) => setFormData({ ...formData, businessType: value })}
+                />
+                <Field
+                  label="Required service"
+                  value={formData.service}
+                  onChange={(value) => setFormData({ ...formData, service: value })}
+                />
+                <Field
+                  label="Budget"
+                  value={formData.budget}
+                  onChange={(value) => setFormData({ ...formData, budget: value })}
+                />
                 {/* Honeypot field (hidden from genuine users) */}
                 <input
                   type="text"
@@ -153,7 +207,10 @@ export const ContactPage: React.FC = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-medium text-white mb-1.5">
+                    <label
+                      className="block text-xs font-medium text-white mb-1.5"
+                      htmlFor="ContactPage-field-0"
+                    >
                       Your Full Name <span className="text-primary">*</span>
                     </label>
                     <input
@@ -161,13 +218,17 @@ export const ContactPage: React.FC = () => {
                       required
                       placeholder="Jane Doe"
                       value={formData.name}
+                      id="ContactPage-field-0"
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-white mb-1.5">
+                    <label
+                      className="block text-xs font-medium text-white mb-1.5"
+                      htmlFor="ContactPage-field-1"
+                    >
                       Email Address <span className="text-primary">*</span>
                     </label>
                     <input
@@ -175,6 +236,7 @@ export const ContactPage: React.FC = () => {
                       required
                       placeholder="jane@company.com"
                       value={formData.email}
+                      id="ContactPage-field-1"
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                     />
@@ -183,20 +245,27 @@ export const ContactPage: React.FC = () => {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-medium text-white mb-1.5">
+                    <label
+                      className="block text-xs font-medium text-white mb-1.5"
+                      htmlFor="ContactPage-field-2"
+                    >
                       Phone Number (Optional)
                     </label>
                     <input
                       type="tel"
                       placeholder="+1 (555) 000-0000"
                       value={formData.phone}
+                      id="ContactPage-field-2"
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-white mb-1.5">
+                    <label
+                      className="block text-xs font-medium text-white mb-1.5"
+                      htmlFor="ContactPage-field-3"
+                    >
                       Subject <span className="text-primary">*</span>
                     </label>
                     <input
@@ -204,6 +273,7 @@ export const ContactPage: React.FC = () => {
                       required
                       placeholder="New website for consulting business"
                       value={formData.subject}
+                      id="ContactPage-field-3"
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                       className="w-full rounded-xl border border-border bg-secondary px-3.5 py-2.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                     />
@@ -211,7 +281,10 @@ export const ContactPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1.5">
+                  <label
+                    className="block text-xs font-medium text-white mb-1.5"
+                    htmlFor="ContactPage-field-4"
+                  >
                     Your Message / Requirements <span className="text-primary">*</span>
                   </label>
                   <textarea
@@ -219,6 +292,7 @@ export const ContactPage: React.FC = () => {
                     rows={5}
                     placeholder="Tell us about what you want your website to achieve, any reference websites you like, and your estimated timeline..."
                     value={formData.message}
+                    id="ContactPage-field-4"
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full rounded-xl border border-border bg-secondary p-3.5 text-xs text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
                   ></textarea>

@@ -1,3 +1,4 @@
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -35,9 +36,16 @@ export const loginAdmin = async (req: Request, res: Response): Promise<void> => 
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: admin.role },
       env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN as any }
+      { expiresIn: env.JWT_EXPIRES_IN as any },
     );
 
+    res.cookie('studio_session', token, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 86400000,
+      path: '/',
+    });
     sendSuccess(
       res,
       {
@@ -50,7 +58,7 @@ export const loginAdmin = async (req: Request, res: Response): Promise<void> => 
           lastLogin: admin.lastLogin,
         },
       },
-      'Admin logged in successfully.'
+      'Admin logged in successfully.',
     );
   } catch (err: any) {
     sendError(res, err.message, 500);
@@ -73,14 +81,17 @@ export const getCurrentAdmin = async (req: AuthenticatedRequest, res: Response):
         role: req.user.role,
         lastLogin: req.user.lastLogin,
       },
-      'Current admin retrieved.'
+      'Current admin retrieved.',
     );
   } catch (err: any) {
     sendError(res, err.message, 500);
   }
 };
 
-export const updateAdminProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const updateAdminProfile = async (
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> => {
   try {
     if (!req.user) {
       sendError(res, 'Unauthorized', 401);
@@ -123,7 +134,7 @@ export const updateAdminProfile = async (req: AuthenticatedRequest, res: Respons
         fullName: admin.fullName,
         role: admin.role,
       },
-      'Admin profile updated successfully.'
+      'Admin profile updated successfully.',
     );
   } catch (err: any) {
     sendError(res, err.message, 500);

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
   getActiveFAQs,
   getAllFAQsAdmin,
@@ -8,7 +8,7 @@ import {
 } from '../controllers/faqController';
 import { authenticateAdmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes
 router.get('/', getActiveFAQs);

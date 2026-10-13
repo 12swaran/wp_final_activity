@@ -1,3 +1,5 @@
+import { MarkdownContent } from '../../components/common/MarkdownContent';
+import { Seo } from '../../components/common/Seo';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, Calendar, User, Tag, ArrowRight } from 'lucide-react';
@@ -42,7 +44,10 @@ export const BlogDetailPage: React.FC = () => {
   return (
     <div className="pt-32 pb-24">
       <div className="mx-auto max-w-3xl px-6">
-        <Link to="/blog" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8">
+        <Link
+          to="/blog"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Articles
         </Link>
 
@@ -65,9 +70,11 @@ export const BlogDetailPage: React.FC = () => {
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
-            {post.title}
-          </h1>
+          <Seo
+            title={post.seoTitle || post.title}
+            description={post.seoDescription || post.summary}
+          />
+          <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">{post.title}</h1>
 
           <p className="text-base text-muted-foreground leading-relaxed italic border-l-2 border-primary/50 pl-4 py-1">
             {post.summary}
@@ -82,7 +89,7 @@ export const BlogDetailPage: React.FC = () => {
 
         {/* Content */}
         <div className="mt-8 space-y-6 text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap border-b border-border pb-12">
-          {post.content}
+          <MarkdownContent>{post.content}</MarkdownContent>
         </div>
 
         {/* Tags */}
@@ -104,8 +111,12 @@ export const BlogDetailPage: React.FC = () => {
         {/* Author / CTA Card */}
         <div className="mt-12 rounded-2xl border border-border bg-card p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
-            <h3 className="text-base font-bold text-white">Have questions about your own website?</h3>
-            <p className="text-xs text-muted-foreground mt-1">Get free advice on your website design or conversion rate.</p>
+            <h3 className="text-base font-bold text-white">
+              Have questions about your own website?
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Get free advice on your website design or conversion rate.
+            </p>
           </div>
           <Link
             to="/quote"

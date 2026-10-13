@@ -80,7 +80,7 @@ const ProjectSchema = new Schema<IProject>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 ProjectSchema.index({ category: 1, orderIndex: 1 });

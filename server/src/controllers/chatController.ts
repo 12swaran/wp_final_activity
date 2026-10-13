@@ -1,3 +1,4 @@
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { ChatConversation } from '../models/ChatConversation';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -12,29 +13,33 @@ export const initOrGetSession = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    let conversation = await ChatConversation.findOne({ sessionId });
-    if (!conversation) {
-      conversation = await ChatConversation.create({
-        sessionId,
-        clientName: clientName ? clientName.trim() : 'Website Guest',
-        clientEmail: clientEmail ? clientEmail.toLowerCase().trim() : '',
-        status: 'active',
-        messages: [
-          {
-            sender: 'admin',
-            senderName: 'Teja Web Studio',
-            message: 'Hello! Thanks for visiting Teja Web Studio. How can we help you with your website project today?',
-            sentAt: new Date(),
-            isRead: true,
-          },
-        ],
-        lastMessageAt: new Date(),
-      });
-    } else {
-      if (clientName) conversation.clientName = clientName.trim();
-      if (clientEmail) conversation.clientEmail = clientEmail.toLowerCase().trim();
-      await conversation.save();
-    }
+    const insert: any = {
+      sessionId,
+      status: 'active',
+      messages: [
+        {
+          sender: 'admin',
+          senderName: 'Teja Web Studio',
+          message:
+            'Hello! Thanks for visiting Teja Web Studio. How can we help you with your website project today?',
+          sentAt: new Date(),
+          isRead: true,
+        },
+      ],
+      lastMessageAt: new Date(),
+    };
+    const update: any = {};
+    if (clientName) update.clientName = clientName.trim();
+    else insert.clientName = 'Website Guest';
+    if (clientEmail) update.clientEmail = clientEmail.toLowerCase().trim();
+    else insert.clientEmail = '';
+    // React Strict Mode and quick navigation can initialize the same session concurrently.
+    // A single indexed upsert prevents duplicate conversations.
+    const conversation = await ChatConversation.findOneAndUpdate(
+      { sessionId },
+      { $setOnInsert: insert, ...(Object.keys(update).length ? { $set: update } : {}) },
+      { upsert: true, new: true, runValidators: true },
+    );
 
     sendSuccess(res, conversation, 'Chat session active.');
   } catch (err: any) {
@@ -68,15 +73,10 @@ export const sendClientMessage = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    let conversation = await ChatConversation.findOne({ sessionId });
+    const conversation = await ChatConversation.findOne({ sessionId });
     if (!conversation) {
-      conversation = await ChatConversation.create({
-        sessionId,
-        clientName: clientName || 'Website Guest',
-        clientEmail: clientEmail || '',
-        status: 'active',
-        messages: [],
-      });
+      sendError(res, 'Start a chat with your name and email first.', 400);
+      return;
     }
 
     conversation.messages.push({
@@ -97,7 +97,9 @@ export const sendClientMessage = async (req: Request, res: Response): Promise<vo
 
 export const getAdminConversations = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const conversations = await ChatConversation.find().sort({ lastMessageAt: -1 });
+    const conversations = await ChatConversation.find({ 'messages.sender': 'client' }).sort({
+      lastMessageAt: -1,
+    });
     sendSuccess(res, conversations, 'Conversations retrieved for admin.');
   } catch (err: any) {
     sendError(res, err.message, 500);
@@ -152,7 +154,7 @@ export const closeConversation = async (req: Request, res: Response): Promise<vo
     const conversation = await ChatConversation.findOneAndUpdate(
       { sessionId },
       { status: 'closed' },
-      { new: true }
+      { new: true, runValidators: true },
     );
 
     if (!conversation) {

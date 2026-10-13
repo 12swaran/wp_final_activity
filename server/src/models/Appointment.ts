@@ -1,6 +1,8 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAppointment extends Document {
+  manageTokenHash?: string;
+  timeZone: string;
   clientName: string;
   clientEmail: string;
   clientPhone?: string;
@@ -18,6 +20,8 @@ export interface IAppointment extends Document {
 
 const AppointmentSchema = new Schema<IAppointment>(
   {
+    manageTokenHash: { type: String, select: false },
+    timeZone: { type: String, default: 'Asia/Kolkata' },
     clientName: {
       type: String,
       required: true,
@@ -73,7 +77,7 @@ const AppointmentSchema = new Schema<IAppointment>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound Partial Index to strictly prevent conflicting double bookings for active slots
@@ -82,7 +86,7 @@ AppointmentSchema.index(
   {
     unique: true,
     partialFilterExpression: { status: { $in: ['confirmed', 'pending'] } },
-  }
+  },
 );
 
 export const Appointment = mongoose.model<IAppointment>('Appointment', AppointmentSchema);

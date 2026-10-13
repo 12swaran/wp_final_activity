@@ -1,6 +1,14 @@
+import { newToken, hashToken, escapeHtml } from '../utils/security';
+import { Setting } from '../models/Setting';
+import { canClientChange } from '../utils/bookingRules';
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { Appointment } from '../models/Appointment';
-import { getAvailableSlotsForDate, bookSlotAtomically } from '../services/bookingService';
+import {
+  getAvailableSlotsForDate,
+  bookSlotAtomically,
+  reserveAppointment,
+} from '../services/bookingReservations';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { sendEmail, emailTemplates } from '../services/emailService';
 import { env } from '../config/env';
@@ -17,7 +25,7 @@ export const getAvailableSlots = async (req: Request, res: Response): Promise<vo
     const slots = await getAvailableSlotsForDate(date);
     sendSuccess(res, { date, slots }, 'Available appointment slots retrieved.');
   } catch (err: any) {
-    sendError(res, err.message, 500);
+    sendError(res, err.message, err.statusCode || 500);
   }
 };
 
@@ -41,7 +49,28 @@ export const bookAppointment = async (req: Request, res: Response): Promise<void
     }
 
     // Atomic reservation & conflict detection
+    const manageToken = newToken();
+    if (idempotencyKey) {
+      const previous = await Appointment.findOne({ idempotencyKey });
+      if (previous) {
+        if (
+          previous.clientEmail !== clientEmail ||
+          previous.appointmentDate !== appointmentDate ||
+          previous.startTime !== startTime
+        ) {
+          sendError(res, 'This request key was already used for a different booking.', 409);
+          return;
+        }
+        await Appointment.updateOne(
+          { _id: previous._id },
+          { manageTokenHash: hashToken(manageToken) },
+        );
+        sendSuccess(res, { ...previous.toObject(), manageToken }, 'Booking already received.');
+        return;
+      }
+    }
     const appointment = await bookSlotAtomically({
+      manageTokenHash: hashToken(manageToken),
       clientName: clientName.trim(),
       clientEmail: clientEmail.toLowerCase().trim(),
       clientPhone: clientPhone ? clientPhone.trim() : '',
@@ -60,9 +89,10 @@ export const bookAppointment = async (req: Request, res: Response): Promise<void
       appointment.serviceType,
       appointment.appointmentDate,
       `${appointment.startTime} - ${appointment.endTime}`,
-      meetingLink
+      meetingLink,
     );
     sendEmail({
+      referenceId: String(appointment._id),
       to: appointment.clientEmail,
       subject: confirmation.subject,
       html: confirmation.html,
@@ -71,15 +101,21 @@ export const bookAppointment = async (req: Request, res: Response): Promise<void
     // Send admin notification
     const adminAlert = emailTemplates.adminNewNotification(
       'Confirmed Appointment',
-      `Client: ${appointment.clientName} (${appointment.clientEmail})\nPhone: ${appointment.clientPhone || 'N/A'}\nService: ${appointment.serviceType}\nDate: ${appointment.appointmentDate}\nTime: ${appointment.startTime} - ${appointment.endTime}\nNotes: ${appointment.notes || 'None'}`
+      `Client: ${escapeHtml(appointment.clientName)} (${appointment.clientEmail})\nPhone: ${appointment.clientPhone || 'N/A'}\nService: ${appointment.serviceType}\nDate: ${appointment.appointmentDate}\nTime: ${appointment.startTime} - ${appointment.endTime}\nNotes: ${appointment.notes || 'None'}`,
     );
     sendEmail({
+      referenceId: String(appointment._id),
       to: env.ADMIN_NOTIFICATION_EMAIL,
       subject: adminAlert.subject,
       html: adminAlert.html,
     }).catch((err) => console.error('[Email Error] Admin notification failed:', err.message));
 
-    sendSuccess(res, appointment, 'Appointment booked successfully! A confirmation email with call details has been sent.', 201);
+    sendSuccess(
+      res,
+      { ...appointment.toObject(), manageTokenHash: undefined, manageToken },
+      'Appointment booked. Save your private management code.',
+      201,
+    );
   } catch (err: any) {
     const statusCode = err.statusCode || 500;
     sendError(res, err.message, statusCode);
@@ -119,7 +155,7 @@ export const getAppointmentsAdmin = async (req: Request, res: Response): Promise
       totalPages: Math.ceil(total / limitNum),
     });
   } catch (err: any) {
-    sendError(res, err.message, 500);
+    sendError(res, err.message, err.statusCode || 500);
   }
 };
 
@@ -136,26 +172,33 @@ export const updateAppointment = async (req: Request, res: Response): Promise<vo
     if (startTime) updateData.startTime = startTime;
     if (endTime) updateData.endTime = endTime;
 
-    const appointment = await Appointment.findByIdAndUpdate(id, updateData, { new: true });
+    const appointment = await reserveAppointment(updateData, String(id));
     if (!appointment) {
       sendError(res, 'Appointment not found.', 404);
       return;
     }
 
+    if (appointmentDate || startTime)
+      await sendEmail({
+        referenceId: String(appointment._id),
+        to: appointment.clientEmail,
+        subject: 'Appointment rescheduled',
+        html: '<p>Your appointment has been rescheduled. Check your management page for the new time.</p>',
+      });
     sendSuccess(res, appointment, 'Appointment updated successfully.');
   } catch (err: any) {
     if (err.code === 11000) {
       sendError(res, 'Conflicting appointment: this slot is already booked.', 409);
       return;
     }
-    sendError(res, err.message, 500);
+    sendError(res, err.message, err.statusCode || 500);
   }
 };
 
 export const cancelAppointment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const appointment = await Appointment.findByIdAndUpdate(id, { status: 'cancelled' }, { new: true });
+    const appointment = await reserveAppointment({ status: 'cancelled' }, String(id));
     if (!appointment) {
       sendError(res, 'Appointment not found.', 404);
       return;
@@ -163,6 +206,7 @@ export const cancelAppointment = async (req: Request, res: Response): Promise<vo
 
     // Send cancellation notice to client
     sendEmail({
+      referenceId: String(appointment._id),
       to: appointment.clientEmail,
       subject: `Cancelled: ${appointment.serviceType} appointment on ${appointment.appointmentDate}`,
       html: `
@@ -178,6 +222,82 @@ export const cancelAppointment = async (req: Request, res: Response): Promise<vo
 
     sendSuccess(res, appointment, 'Appointment cancelled successfully.');
   } catch (err: any) {
-    sendError(res, err.message, 500);
+    sendError(res, err.message, err.statusCode || 500);
   }
+};
+
+export const manageAppointment = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const appointment = await Appointment.findOne({ manageTokenHash: hashToken(req.body.token) });
+    if (!appointment) {
+      sendError(res, 'Invalid management code.', 404);
+      return;
+    }
+    const settings = await Setting.findOne();
+    if (!settings) {
+      sendError(res, 'Booking settings unavailable.', 503);
+      return;
+    }
+    if (req.body.action === 'view') {
+      sendSuccess(res, {
+        ...appointment.toObject(),
+        timeZone: appointment.timeZone || settings.timeZone,
+        cancellationHours: settings.cancellationHours,
+      });
+      return;
+    }
+    if (
+      !['confirmed', 'pending'].includes(appointment.status) ||
+      !canClientChange(
+        appointment.appointmentDate,
+        appointment.startTime,
+        settings.cancellationHours,
+        appointment.timeZone || settings.timeZone,
+      )
+    ) {
+      sendError(res, 'This booking can no longer be changed online. Contact the studio.', 409);
+      return;
+    }
+    let update: Record<string, any> = { status: 'cancelled' };
+    if (req.body.action === 'reschedule') {
+      if (!req.body.appointmentDate || !req.body.startTime || !req.body.endTime) {
+        sendError(res, 'Choose a new date and slot.', 400);
+        return;
+      }
+      update = {
+        appointmentDate: req.body.appointmentDate,
+        startTime: req.body.startTime,
+        endTime: req.body.endTime,
+      };
+    }
+    const result = await reserveAppointment(update, String(appointment._id));
+    await sendEmail({
+      referenceId: String(appointment._id),
+      to: result.clientEmail,
+      subject: req.body.action === 'cancel' ? 'Appointment cancelled' : 'Appointment rescheduled',
+      html: '<p>Your appointment was updated. Check your management page for details.</p>',
+    });
+    sendSuccess(
+      res,
+      {
+        ...result.toObject(),
+        timeZone: appointment.timeZone || settings.timeZone,
+        cancellationHours: settings.cancellationHours,
+      },
+      'Booking updated.',
+    );
+  } catch (error: any) {
+    sendError(res, error.message, error.statusCode || 500);
+  }
+};
+export const rotateAppointmentCode = async (req: Request, res: Response): Promise<void> => {
+  const token = newToken();
+  const appointment = await Appointment.findByIdAndUpdate(req.params.id, {
+    manageTokenHash: hashToken(token),
+  });
+  if (!appointment) {
+    sendError(res, 'Appointment not found.', 404);
+    return;
+  }
+  sendSuccess(res, { token }, 'Private code regenerated.');
 };

@@ -7,6 +7,7 @@ export interface AdminUser {
 }
 
 export interface Service {
+  isPublished: boolean;
   _id: string;
   title: string;
   slug: string;
@@ -70,6 +71,8 @@ export interface Inquiry {
 }
 
 export interface QuotationRequest {
+  proposal?: string;
+  attachments?: string[];
   _id: string;
   name: string;
   email: string;
@@ -121,6 +124,8 @@ export interface Testimonial {
 }
 
 export interface BlogPost {
+  seoTitle?: string;
+  seoDescription?: string;
   _id: string;
   title: string;
   slug: string;
@@ -164,6 +169,12 @@ export interface ChatConversation {
 }
 
 export interface WebsiteSettings {
+  logoUrl: string;
+  footerText: string;
+  brandColor: string;
+  timeZone: string;
+  cancellationHours: number;
+  pageSeo: Record<string, { title: string; description: string }>;
   _id: string;
   studioName: string;
   tagline: string;

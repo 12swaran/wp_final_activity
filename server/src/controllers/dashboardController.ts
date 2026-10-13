@@ -1,3 +1,4 @@
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { Inquiry } from '../models/Inquiry';
 import { QuotationRequest } from '../models/QuotationRequest';
@@ -47,7 +48,7 @@ export const getDashboardStats = async (_req: Request, res: Response): Promise<v
       Testimonial.countDocuments(),
       Testimonial.countDocuments({ isApproved: false }),
       BlogPost.countDocuments({ isPublished: true }),
-      ChatConversation.countDocuments({ status: 'active' }),
+      ChatConversation.countDocuments({ status: 'active', 'messages.sender': 'client' }),
       Inquiry.find().sort({ createdAt: -1 }).limit(5),
       Appointment.find().sort({ appointmentDate: 1, startTime: 1 }).limit(5),
       QuotationRequest.find().sort({ createdAt: -1 }).limit(5),
@@ -88,7 +89,7 @@ export const getDashboardStats = async (_req: Request, res: Response): Promise<v
           quotations: recentQuotations,
         },
       },
-      'Dashboard analytics retrieved successfully.'
+      'Dashboard analytics retrieved successfully.',
     );
   } catch (err: any) {
     sendError(res, err.message, 500);

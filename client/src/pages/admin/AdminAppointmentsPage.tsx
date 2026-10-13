@@ -1,5 +1,18 @@
+import { api } from '../../services/api';
+import { Field, fieldClass } from '../../components/common/Forms';
+import { Pagination } from '../../components/common/Forms';
 import React, { useEffect, useState } from 'react';
-import { Calendar as CalendarIcon, Clock, Video, XCircle, CheckCircle2, User, Phone, Mail, Filter } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Video,
+  XCircle,
+  CheckCircle2,
+  User,
+  Phone,
+  Mail,
+  Filter,
+} from 'lucide-react';
 import { Appointment } from '../../types';
 import { appointmentsApi } from '../../services/api';
 
@@ -7,12 +20,18 @@ export const AdminAppointmentsPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
+  const [page, setPage] = useState(1),
+    [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   // Edit / Reschedule state
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [meetingLink, setMeetingLink] = useState('');
   const [statusInput, setStatusInput] = useState('');
+  const [managementCode, setManagementCode] = useState('');
+  const [newDate, setNewDate] = useState(''),
+    [newTime, setNewTime] = useState(''),
+    [editSlots, setEditSlots] = useState<any[]>([]);
   const [notesInput, setNotesInput] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
 
@@ -22,19 +41,30 @@ export const AdminAppointmentsPage: React.FC = () => {
       .getAllAdmin({
         status: statusFilter === 'all' ? undefined : statusFilter,
         date: dateFilter || undefined,
-        limit: 100,
+        limit: 20,
+        page,
       })
-      .then((res) => setAppointments(res.data || []))
+      .then((res) => {
+        setAppointments(res.data || []);
+        setPages(res.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchAppointments();
+  }, [statusFilter, dateFilter, page]);
+  useEffect(() => {
+    setPage(1);
   }, [statusFilter, dateFilter]);
 
   const openEdit = (app: Appointment) => {
     setSelectedAppointment(app);
+    setManagementCode('');
+    setNewDate(app.appointmentDate);
+    setNewTime(app.startTime);
+    appointmentsApi.getAvailableSlots(app.appointmentDate).then((data) => setEditSlots(data.slots));
     setMeetingLink(app.meetingLink || '');
     setStatusInput(app.status);
     setNotesInput(app.notes || '');
@@ -48,6 +78,11 @@ export const AdminAppointmentsPage: React.FC = () => {
     try {
       await appointmentsApi.update(selectedAppointment._id, {
         meetingLink,
+        appointmentDate: newDate,
+        startTime: newTime,
+        endTime:
+          editSlots.find((slot) => slot.startTime === newTime)?.endTime ||
+          selectedAppointment.endTime,
         status: statusInput,
         notes: notesInput,
       });
@@ -61,7 +96,11 @@ export const AdminAppointmentsPage: React.FC = () => {
   };
 
   const handleCancel = async (id: string) => {
-    if (window.confirm('Cancel this appointment? This will send an automated cancellation notification email to the client.')) {
+    if (
+      window.confirm(
+        'Cancel this appointment? This will send an automated cancellation notification email to the client.',
+      )
+    ) {
       try {
         await appointmentsApi.cancel(id);
         fetchAppointments();
@@ -73,11 +112,13 @@ export const AdminAppointmentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <Pagination page={page} totalPages={pages} onChange={setPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Appointments &amp; Discovery Calls</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage scheduled client consultations, update video meeting links, and manage calendar availability.
+            Manage scheduled client consultations, update video meeting links, and manage calendar
+            availability.
           </p>
         </div>
 
@@ -157,11 +198,17 @@ export const AdminAppointmentsPage: React.FC = () => {
                     <td className="py-4 px-5">
                       <p className="font-bold text-white">{app.clientName}</p>
                       <p className="text-[11px] text-muted-foreground">{app.clientEmail}</p>
-                      {app.clientPhone && <p className="text-[10px] text-primary">{app.clientPhone}</p>}
+                      {app.clientPhone && (
+                        <p className="text-[10px] text-primary">{app.clientPhone}</p>
+                      )}
                     </td>
                     <td className="py-4 px-5">
                       <p className="font-medium text-white">{app.serviceType}</p>
-                      {app.notes && <p className="text-[11px] text-muted-foreground italic truncate max-w-xs">{app.notes}</p>}
+                      {app.notes && (
+                        <p className="text-[11px] text-muted-foreground italic truncate max-w-xs">
+                          {app.notes}
+                        </p>
+                      )}
                     </td>
                     <td className="py-4 px-5">
                       {app.meetingLink ? (
@@ -183,8 +230,8 @@ export const AdminAppointmentsPage: React.FC = () => {
                           app.status === 'confirmed'
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                             : app.status === 'cancelled'
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                            : 'bg-secondary text-muted-foreground'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-secondary text-muted-foreground'
                         }`}
                       >
                         {app.status}
@@ -216,18 +263,82 @@ export const AdminAppointmentsPage: React.FC = () => {
 
       {/* Edit Appointment Modal */}
       {selectedAppointment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in"
+        >
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl">
             <h3 className="text-lg font-bold text-white mb-1">Manage Call Details</h3>
             <p className="text-xs text-muted-foreground mb-4">
-              {selectedAppointment.clientName} • {selectedAppointment.appointmentDate} ({selectedAppointment.startTime})
+              {selectedAppointment.clientName} • {selectedAppointment.appointmentDate} (
+              {selectedAppointment.startTime})
             </p>
 
             <form onSubmit={handleUpdate} className="space-y-4">
+              <button
+                type="button"
+                className="underline"
+                onClick={async () => {
+                  const response = await api.post(
+                    `/appointments/${selectedAppointment._id}/management-code`,
+                  );
+                  setManagementCode(response.data.data.token);
+                }}
+              >
+                Generate private client management link
+              </button>
+              {managementCode && (
+                <a
+                  className="block text-primary underline break-all"
+                  href={`/manage-booking#${managementCode}`}
+                >
+                  {window.location.origin}/manage-booking#{managementCode}
+                </a>
+              )}
+              <Field
+                label="Appointment date"
+                type="date"
+                value={newDate}
+                onChange={(value) => {
+                  setNewDate(value);
+                  setNewTime('');
+                  appointmentsApi.getAvailableSlots(value).then((data) => setEditSlots(data.slots));
+                }}
+              />
+              <label htmlFor="edit-time">Appointment time</label>
+              <select
+                id="edit-time"
+                className={fieldClass}
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                required
+              >
+                <option value="">Select a time</option>
+                {editSlots
+                  .filter(
+                    (slot) =>
+                      slot.isAvailable ||
+                      (newDate === selectedAppointment?.appointmentDate &&
+                        slot.startTime === selectedAppointment?.startTime),
+                  )
+                  .map((slot) => (
+                    <option key={slot.startTime} value={slot.startTime}>
+                      {slot.startTime}–{slot.endTime}
+                    </option>
+                  ))}
+              </select>
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Status</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminAppointmentsPage-field-0"
+                >
+                  Status
+                </label>
                 <select
                   value={statusInput}
+                  id="AdminAppointmentsPage-field-0"
                   onChange={(e) => setStatusInput(e.target.value)}
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                 >
@@ -239,10 +350,16 @@ export const AdminAppointmentsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Google Meet / Video Link</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminAppointmentsPage-field-1"
+                >
+                  Google Meet / Video Link
+                </label>
                 <input
                   type="url"
                   value={meetingLink}
+                  id="AdminAppointmentsPage-field-1"
                   onChange={(e) => setMeetingLink(e.target.value)}
                   placeholder="https://meet.google.com/xyz-abc-123"
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -250,10 +367,16 @@ export const AdminAppointmentsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Notes</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminAppointmentsPage-field-2"
+                >
+                  Notes
+                </label>
                 <textarea
                   rows={3}
                   value={notesInput}
+                  id="AdminAppointmentsPage-field-2"
                   onChange={(e) => setNotesInput(e.target.value)}
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none"
                 ></textarea>
@@ -262,6 +385,8 @@ export const AdminAppointmentsPage: React.FC = () => {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
+                  data-dialog-close
+                  aria-label="Close"
                   onClick={() => setSelectedAppointment(null)}
                   className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold text-muted-foreground hover:text-white"
                 >

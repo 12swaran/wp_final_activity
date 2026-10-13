@@ -56,7 +56,7 @@ const TestimonialSchema = new Schema<ITestimonial>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 TestimonialSchema.index({ isApproved: 1, isFeatured: 1, createdAt: -1 });

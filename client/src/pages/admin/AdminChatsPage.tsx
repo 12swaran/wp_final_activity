@@ -77,7 +77,8 @@ export const AdminChatsPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-white">Live Customer Chat Console</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Real-time conversations with website visitors. Replies are saved and delivered directly to the client's floating chat box.
+          Real-time conversations with website visitors. Replies are saved and delivered directly to
+          the client's floating chat box.
         </p>
       </div>
 
@@ -87,7 +88,8 @@ export const AdminChatsPage: React.FC = () => {
         </div>
       ) : conversations.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-12 text-center text-xs text-muted-foreground">
-          No chat conversations started yet. Visitors who message via the public chat widget will appear here.
+          No chat conversations started yet. Visitors who message via the public chat widget will
+          appear here.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[650px] rounded-3xl border border-border bg-card overflow-hidden">
@@ -95,7 +97,8 @@ export const AdminChatsPage: React.FC = () => {
           <div className="lg:col-span-4 border-r border-border flex flex-col h-full bg-secondary/20">
             <div className="p-4 border-b border-border">
               <h2 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" /> Active Threads ({conversations.length})
+                <MessageSquare className="h-4 w-4 text-primary" /> Active Threads (
+                {conversations.length})
               </h2>
             </div>
 
@@ -103,7 +106,9 @@ export const AdminChatsPage: React.FC = () => {
               {conversations.map((conv) => {
                 const isSelected = selectedSessionId === conv.sessionId;
                 const lastMsg = conv.messages && conv.messages[conv.messages.length - 1];
-                const unreadClientMsgs = conv.messages.filter((m) => m.sender === 'client' && !m.isRead).length;
+                const unreadClientMsgs = conv.messages.filter(
+                  (m) => m.sender === 'client' && !m.isRead,
+                ).length;
 
                 return (
                   <button
@@ -123,7 +128,10 @@ export const AdminChatsPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-white truncate">{conv.clientName}</h4>
                         <span className="text-[10px] text-muted-foreground">
-                          {new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(conv.lastMessageAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </span>
                       </div>
 
@@ -165,9 +173,12 @@ export const AdminChatsPage: React.FC = () => {
                       {activeConversation.clientName.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-white">{activeConversation.clientName}</h3>
+                      <h3 className="text-xs font-bold text-white">
+                        {activeConversation.clientName}
+                      </h3>
                       <p className="text-[10px] text-muted-foreground">
-                        Session: {activeConversation.sessionId} • {activeConversation.clientEmail || 'No email provided'}
+                        Session: {activeConversation.sessionId} •{' '}
+                        {activeConversation.clientEmail || 'No email provided'}
                       </p>
                     </div>
                   </div>
@@ -198,7 +209,11 @@ export const AdminChatsPage: React.FC = () => {
                             isAdmin ? 'bg-primary text-white' : 'bg-secondary text-muted-foreground'
                           }`}
                         >
-                          {isAdmin ? <Bot className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+                          {isAdmin ? (
+                            <Bot className="h-3.5 w-3.5" />
+                          ) : (
+                            <User className="h-3.5 w-3.5" />
+                          )}
                         </div>
 
                         <div
@@ -209,8 +224,17 @@ export const AdminChatsPage: React.FC = () => {
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3 mb-1 text-[10px] opacity-75">
-                            <span>{isAdmin ? msg.senderName || 'Studio Admin' : activeConversation.clientName}</span>
-                            <span>{new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span>
+                              {isAdmin
+                                ? msg.senderName || 'Studio Admin'
+                                : activeConversation.clientName}
+                            </span>
+                            <span>
+                              {new Date(msg.sentAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
                           </div>
                           <p className="whitespace-pre-wrap">{msg.message}</p>
                         </div>
@@ -221,7 +245,10 @@ export const AdminChatsPage: React.FC = () => {
                 </div>
 
                 {/* Reply Composer Form */}
-                <form onSubmit={handleSendReply} className="p-4 border-t border-border bg-card flex items-center gap-3">
+                <form
+                  onSubmit={handleSendReply}
+                  className="p-4 border-t border-border bg-card flex items-center gap-3"
+                >
                   <input
                     type="text"
                     value={replyInput}

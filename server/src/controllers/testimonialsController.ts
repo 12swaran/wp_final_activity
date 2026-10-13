@@ -1,10 +1,15 @@
+import { listRecords } from '../utils/listRecords';
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { Testimonial } from '../models/Testimonial';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 
 export const getApprovedTestimonials = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const testimonials = await Testimonial.find({ isApproved: true }).sort({ isFeatured: -1, createdAt: -1 });
+    const testimonials = await Testimonial.find({ isApproved: true }).sort({
+      isFeatured: -1,
+      createdAt: -1,
+    });
     sendSuccess(res, testimonials, 'Approved testimonials retrieved successfully.');
   } catch (err: any) {
     sendError(res, err.message, 500);
@@ -31,19 +36,26 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
       isFeatured: false,
     });
 
-    sendSuccess(res, review, 'Thank you for your feedback! Your review has been submitted for moderation.', 201);
+    sendSuccess(
+      res,
+      review,
+      'Thank you for your feedback! Your review has been submitted for moderation.',
+      201,
+    );
   } catch (err: any) {
     sendError(res, err.message, 500);
   }
 };
 
-export const getAllTestimonialsAdmin = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
-    sendSuccess(res, testimonials, 'All testimonials retrieved.');
-  } catch (err: any) {
-    sendError(res, err.message, 500);
-  }
+export const getAllTestimonialsAdmin = async (req: Request, res: Response): Promise<void> => {
+  await listRecords(
+    req,
+    res,
+    Testimonial,
+    ['clientName', 'company', 'reviewText'],
+    {},
+    { createdAt: -1 },
+  );
 };
 
 export const toggleApproveTestimonial = async (req: Request, res: Response): Promise<void> => {
@@ -55,7 +67,10 @@ export const toggleApproveTestimonial = async (req: Request, res: Response): Pro
     if (isApproved !== undefined) updateData.isApproved = Boolean(isApproved);
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
 
-    const testimonial = await Testimonial.findByIdAndUpdate(id, updateData, { new: true });
+    const testimonial = await Testimonial.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!testimonial) {
       sendError(res, 'Testimonial not found.', 404);
       return;

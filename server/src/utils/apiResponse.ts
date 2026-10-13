@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { Response } from 'express';
 
 export interface ApiResponsePayload<T = any> {
@@ -18,7 +19,7 @@ export const sendSuccess = <T>(
   data?: T,
   message: string = 'Success',
   statusCode: number = 200,
-  meta?: ApiResponsePayload['meta']
+  meta?: ApiResponsePayload['meta'],
 ): Response => {
   return res.status(statusCode).json({
     success: true,
@@ -32,11 +33,16 @@ export const sendError = (
   res: Response,
   error: string | any = 'An error occurred',
   statusCode: number = 500,
-  message: string = 'Error'
+  message: string = 'Error',
 ): Response => {
   return res.status(statusCode).json({
     success: false,
     message,
-    error: typeof error === 'string' ? error : error.message || error,
+    error:
+      statusCode >= 500 && env.NODE_ENV === 'production'
+        ? 'The server could not complete this request.'
+        : typeof error === 'string'
+          ? error
+          : error.message || error,
   });
 };

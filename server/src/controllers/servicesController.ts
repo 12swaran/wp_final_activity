@@ -1,3 +1,4 @@
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { Service } from '../models/Service';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -5,7 +6,10 @@ import { slugify } from '../utils/slugify';
 
 export const getServices = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const services = await Service.find().sort({ orderIndex: 1, createdAt: 1 });
+    const services = await Service.find({ isPublished: { $ne: false } }).sort({
+      orderIndex: 1,
+      createdAt: 1,
+    });
     sendSuccess(res, services, 'Services retrieved successfully.');
   } catch (err: any) {
     sendError(res, err.message, 500);
@@ -15,7 +19,7 @@ export const getServices = async (_req: Request, res: Response): Promise<void> =
 export const getServiceBySlug = async (req: Request, res: Response): Promise<void> => {
   try {
     const { slug } = req.params;
-    const service = await Service.findOne({ slug });
+    const service = await Service.findOne({ slug, isPublished: { $ne: false } });
     if (!service) {
       sendError(res, 'Service not found.', 404);
       return;
@@ -28,8 +32,18 @@ export const getServiceBySlug = async (req: Request, res: Response): Promise<voi
 
 export const createService = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, slug, shortDescription, fullDescription, icon, deliverables, startingPrice, isFeatured, orderIndex } = req.body;
-    
+    const {
+      title,
+      slug,
+      shortDescription,
+      fullDescription,
+      icon,
+      deliverables,
+      startingPrice,
+      isFeatured,
+      orderIndex,
+    } = req.body;
+
     if (!title || !shortDescription) {
       sendError(res, 'Title and short description are required.', 400);
       return;
@@ -44,6 +58,7 @@ export const createService = async (req: Request, res: Response): Promise<void> 
     }
 
     const service = await Service.create({
+      isPublished: req.body.isPublished ?? true,
       title,
       slug: finalSlug,
       shortDescription,
@@ -72,7 +87,10 @@ export const updateService = async (req: Request, res: Response): Promise<void> 
       updateData.slug = slugify(updateData.slug);
     }
 
-    const service = await Service.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    const service = await Service.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!service) {
       sendError(res, 'Service not found.', 404);
       return;

@@ -1,3 +1,7 @@
+import { seoRoutes } from './routes/seoRoutes';
+import mongoose from 'mongoose';
+import { BookingLock } from './models/BookingLock';
+import { initializeReservations } from './services/bookingReservations';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -18,16 +22,9 @@ app.use(helmet());
 // Cross-origin resource sharing
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or localhost/client URL
-      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || origin === env.CLIENT_URL) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Permissive in lab dev environment
-      }
-    },
+    origin: (origin, callback) => callback(null, !origin || origin === env.CLIENT_URL),
     credentials: true,
-  })
+  }),
 );
 
 // Logging
@@ -36,17 +33,28 @@ if (env.NODE_ENV !== 'test') {
 }
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '8mb' }));
+app.use((req, res, next) => {
+  if (
+    !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+    req.headers.origin &&
+    req.headers.origin !== env.CLIENT_URL
+  )
+    return void sendError(res, 'Origin not allowed.', 403);
+  next();
+});
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
+  res.status(mongoose.connection.readyState === 1 ? 200 : 503).json({
+    status: mongoose.connection.readyState === 1 ? 'ok' : 'unavailable',
     timestamp: new Date().toISOString(),
     service: 'Freelance Studio API',
   });
 });
+
+app.use(seoRoutes);
 
 // Mount Master API Router
 app.use('/api', generalApiLimiter, apiRoutes);
@@ -65,6 +73,8 @@ const startServer = async () => {
     await connectDB();
     // Auto-seed initial content and superadmin if database is clean
     await seedDatabase();
+    await Promise.all(Object.values(mongoose.models).map((model) => model.init()));
+    await initializeReservations();
 
     app.listen(env.PORT, () => {
       console.log(`\n🚀 [Server] Freelance Web Studio API running at http://localhost:${env.PORT}`);
@@ -78,6 +88,6 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (require.main === module) startServer();
 
 export default app;

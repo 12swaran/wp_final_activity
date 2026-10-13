@@ -41,7 +41,7 @@ const AdminSchema = new Schema<IAdmin>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Method to verify candidate password

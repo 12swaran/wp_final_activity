@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import { getSettings, updateSettings } from '../controllers/settingsController';
-import { authenticateAdmin } from '../middleware/authMiddleware';
+import { authenticateAdmin, requireSuperadmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 router.get('/', getSettings);
-router.put('/', authenticateAdmin, updateSettings);
+router.put('/', authenticateAdmin, requireSuperadmin, updateSettings);
 
 export default router;

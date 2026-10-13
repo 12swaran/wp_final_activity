@@ -46,7 +46,8 @@ export const AdminDashboardPage: React.FC = () => {
       <div>
         <h1 className="text-2xl font-bold text-white">Live Operations Dashboard</h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Real-time database metrics, customer inquiries, appointment bookings, and proposal pipelines.
+          Real-time database metrics, customer inquiries, appointment bookings, and proposal
+          pipelines.
         </p>
       </div>
 
@@ -61,7 +62,9 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="font-display text-3xl font-bold text-white">{kpi?.inquiries.total || 0}</div>
+            <div className="font-display text-3xl font-bold text-white">
+              {kpi?.inquiries.total || 0}
+            </div>
             <div className="mt-2 flex items-center justify-between text-xs">
               <span className="rounded-full bg-emerald-500/10 text-emerald-400 px-2 py-0.5 text-[11px] font-semibold">
                 {kpi?.inquiries.new || 0} New Unread
@@ -202,8 +205,8 @@ export const AdminDashboardPage: React.FC = () => {
                         inq.status === 'new'
                           ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                           : inq.status === 'in_progress'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                       }`}
                     >
                       {inq.status}
@@ -216,7 +219,9 @@ export const AdminDashboardPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground py-6 text-center">No inquiries logged yet.</p>
+            <p className="text-xs text-muted-foreground py-6 text-center">
+              No inquiries logged yet.
+            </p>
           )}
         </div>
 
@@ -246,8 +251,8 @@ export const AdminDashboardPage: React.FC = () => {
                       app.status === 'confirmed'
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : app.status === 'cancelled'
-                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                        : 'bg-secondary text-muted-foreground'
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : 'bg-secondary text-muted-foreground'
                     }`}
                   >
                     {app.status}
@@ -256,7 +261,9 @@ export const AdminDashboardPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground py-6 text-center">No upcoming appointments booked.</p>
+            <p className="text-xs text-muted-foreground py-6 text-center">
+              No upcoming appointments booked.
+            </p>
           )}
         </div>
       </div>

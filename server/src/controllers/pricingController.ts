@@ -1,3 +1,5 @@
+import { listRecords } from '../utils/listRecords';
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { PricingPlan } from '../models/PricingPlan';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -12,18 +14,24 @@ export const getPricingPlans = async (_req: Request, res: Response): Promise<voi
   }
 };
 
-export const getAllPricingPlansAdmin = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const plans = await PricingPlan.find().sort({ orderIndex: 1 });
-    sendSuccess(res, plans, 'All pricing plans retrieved successfully.');
-  } catch (err: any) {
-    sendError(res, err.message, 500);
-  }
+export const getAllPricingPlansAdmin = async (req: Request, res: Response): Promise<void> => {
+  await listRecords(req, res, PricingPlan, ['name', 'description'], {}, { orderIndex: 1 });
 };
 
 export const createPricingPlan = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, price, billingCycle, description, badge, isPopular, features, ctaText, orderIndex, isActive } = req.body;
+    const {
+      name,
+      price,
+      billingCycle,
+      description,
+      badge,
+      isPopular,
+      features,
+      ctaText,
+      orderIndex,
+      isActive,
+    } = req.body;
 
     if (!name || price === undefined || !description) {
       sendError(res, 'Name, price, and description are required.', 400);
@@ -60,7 +68,10 @@ export const updatePricingPlan = async (req: Request, res: Response): Promise<vo
       updateData.slug = slugify(updateData.name);
     }
 
-    const plan = await PricingPlan.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    const plan = await PricingPlan.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!plan) {
       sendError(res, 'Pricing plan not found.', 404);
       return;

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
   submitQuotation,
   getQuotations,
@@ -10,7 +10,7 @@ import { authenticateAdmin } from '../middleware/authMiddleware';
 import { formSubmissionRateLimiter } from '../middleware/rateLimiter';
 import { checkHoneypotAndDuplicate } from '../middleware/idempotency';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public submission
 router.post('/', formSubmissionRateLimiter, checkHoneypotAndDuplicate, submitQuotation);

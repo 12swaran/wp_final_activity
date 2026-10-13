@@ -69,7 +69,7 @@ const PricingPlanSchema = new Schema<IPricingPlan>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 PricingPlanSchema.index({ orderIndex: 1 });

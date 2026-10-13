@@ -1,6 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IService extends Document {
+  isPublished: boolean;
   title: string;
   slug: string;
   shortDescription: string;
@@ -16,6 +17,7 @@ export interface IService extends Document {
 
 const ServiceSchema = new Schema<IService>(
   {
+    isPublished: { type: Boolean, default: true },
     title: {
       type: String,
       required: true,
@@ -59,7 +61,7 @@ const ServiceSchema = new Schema<IService>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 ServiceSchema.index({ orderIndex: 1 });

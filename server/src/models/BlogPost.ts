@@ -1,6 +1,8 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IBlogPost extends Document {
+  seoTitle: string;
+  seoDescription: string;
   title: string;
   slug: string;
   summary: string;
@@ -17,6 +19,8 @@ export interface IBlogPost extends Document {
 
 const BlogPostSchema = new Schema<IBlogPost>(
   {
+    seoTitle: { type: String, default: '' },
+    seoDescription: { type: String, default: '' },
     title: {
       type: String,
       required: true,
@@ -64,7 +68,7 @@ const BlogPostSchema = new Schema<IBlogPost>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 BlogPostSchema.index({ isPublished: 1, publishedAt: -1 });

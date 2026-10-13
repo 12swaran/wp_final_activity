@@ -44,7 +44,7 @@ const ChatMessageSchema = new Schema<IChatMessage>(
       default: false,
     },
   },
-  { _id: true }
+  { _id: true },
 );
 
 const ChatConversationSchema = new Schema<IChatConversation>(
@@ -78,9 +78,12 @@ const ChatConversationSchema = new Schema<IChatConversation>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 ChatConversationSchema.index({ status: 1, lastMessageAt: -1 });
 
-export const ChatConversation = mongoose.model<IChatConversation>('ChatConversation', ChatConversationSchema);
+export const ChatConversation = mongoose.model<IChatConversation>(
+  'ChatConversation',
+  ChatConversationSchema,
+);

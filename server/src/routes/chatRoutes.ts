@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
   initOrGetSession,
   getSessionMessages,
@@ -9,7 +9,7 @@ import {
 } from '../controllers/chatController';
 import { authenticateAdmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes for client chat box widget
 router.post('/session', initOrGetSession);

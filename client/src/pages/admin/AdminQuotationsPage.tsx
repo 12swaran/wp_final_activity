@@ -1,3 +1,5 @@
+import { Field, downloadFile } from '../../components/common/Forms';
+import { Pagination } from '../../components/common/Forms';
 import React, { useEffect, useState } from 'react';
 import { Search, DollarSign, Edit3, Trash2, CheckCircle2, Clock, X } from 'lucide-react';
 import { QuotationRequest } from '../../types';
@@ -7,11 +9,14 @@ export const AdminQuotationsPage: React.FC = () => {
   const [quotations, setQuotations] = useState<QuotationRequest[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1),
+    [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   // Edit quote modal
   const [editingQuote, setEditingQuote] = useState<QuotationRequest | null>(null);
   const [estimateInput, setEstimateInput] = useState<number>(0);
+  const [proposal, setProposal] = useState('');
   const [notesInput, setNotesInput] = useState<string>('');
   const [statusInput, setStatusInput] = useState<string>('new');
   const [saveLoading, setSaveLoading] = useState(false);
@@ -22,19 +27,27 @@ export const AdminQuotationsPage: React.FC = () => {
       .getAllAdmin({
         status: statusFilter === 'all' ? undefined : statusFilter,
         search: search || undefined,
-        limit: 50,
+        limit: 20,
+        page,
       })
-      .then((res) => setQuotations(res.data || []))
+      .then((res) => {
+        setQuotations(res.data || []);
+        setPages(res.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchQuotations();
+  }, [statusFilter, search, page]);
+  useEffect(() => {
+    setPage(1);
   }, [statusFilter, search]);
 
   const openEditModal = (q: QuotationRequest) => {
     setEditingQuote(q);
+    setProposal(q.proposal || '');
     setEstimateInput(q.estimatedQuote || 0);
     setNotesInput(q.notes || '');
     setStatusInput(q.status);
@@ -50,6 +63,7 @@ export const AdminQuotationsPage: React.FC = () => {
         estimatedQuote: estimateInput,
         notes: notesInput,
         status: statusInput,
+        proposal,
       });
       setEditingQuote(null);
       fetchQuotations();
@@ -73,10 +87,13 @@ export const AdminQuotationsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <Pagination page={page} totalPages={pages} onChange={setPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Quotation Proposals Pipeline</h1>
-          <p className="text-xs text-muted-foreground mt-1">Review custom website requests, assign estimates, and track client deal status.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Review custom website requests, assign estimates, and track client deal status.
+          </p>
         </div>
 
         {/* Pipeline Filters */}
@@ -137,15 +154,22 @@ export const AdminQuotationsPage: React.FC = () => {
                   <tr key={q._id} className="hover:bg-secondary/30 transition-colors">
                     <td className="py-4 px-5">
                       <p className="font-bold text-white">{q.name}</p>
-                      <p className="text-[11px] text-muted-foreground">{q.company || 'Private Client'}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {q.company || 'Private Client'}
+                      </p>
                       <p className="text-[10px] text-primary">{q.email}</p>
                     </td>
                     <td className="py-4 px-5 max-w-xs">
                       <p className="font-semibold text-white">{q.projectType}</p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">{q.description}</p>
+                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                        {q.description}
+                      </p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {q.requiredFeatures?.slice(0, 2).map((f, i) => (
-                          <span key={i} className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
+                          <span
+                            key={i}
+                            className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground"
+                          >
                             {f}
                           </span>
                         ))}
@@ -164,10 +188,10 @@ export const AdminQuotationsPage: React.FC = () => {
                           q.status === 'new'
                             ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                             : q.status === 'quoted'
-                            ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                            : q.status === 'accepted'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-secondary text-muted-foreground'
+                              ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
+                              : q.status === 'accepted'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-secondary text-muted-foreground'
                         }`}
                       >
                         {q.status}
@@ -199,9 +223,16 @@ export const AdminQuotationsPage: React.FC = () => {
 
       {/* Edit Estimate & Status Modal */}
       {editingQuote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in"
+        >
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative">
             <button
+              data-dialog-close
+              aria-label="Close"
               onClick={() => setEditingQuote(null)}
               className="absolute top-5 right-5 text-muted-foreground hover:text-white"
             >
@@ -209,13 +240,37 @@ export const AdminQuotationsPage: React.FC = () => {
             </button>
 
             <h3 className="text-lg font-bold text-white mb-1">Update Proposal Estimate</h3>
-            <p className="text-xs text-muted-foreground mb-4">Client: {editingQuote.name} ({editingQuote.company || 'Private'})</p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Client: {editingQuote.name} ({editingQuote.company || 'Private'})
+            </p>
 
             <form onSubmit={handleSave} className="space-y-4">
+              <Field
+                label="Quotation scope and terms"
+                value={proposal}
+                onChange={setProposal}
+                multiline
+              />
+              {editingQuote.attachments?.map((id, index) => (
+                <button
+                  type="button"
+                  key={id}
+                  className="block underline"
+                  onClick={() => downloadFile(id, `client-brief-${index + 1}`)}
+                >
+                  Download client brief {index + 1}
+                </button>
+              ))}
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Quote Status</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminQuotationsPage-field-0"
+                >
+                  Quote Status
+                </label>
                 <select
                   value={statusInput}
+                  id="AdminQuotationsPage-field-0"
                   onChange={(e) => setStatusInput(e.target.value)}
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                 >
@@ -228,10 +283,16 @@ export const AdminQuotationsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Estimated Proposal Amount ($)</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminQuotationsPage-field-1"
+                >
+                  Estimated Proposal Amount ($)
+                </label>
                 <input
                   type="number"
                   value={estimateInput}
+                  id="AdminQuotationsPage-field-1"
                   onChange={(e) => setEstimateInput(Number(e.target.value))}
                   placeholder="449"
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono"
@@ -239,10 +300,16 @@ export const AdminQuotationsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Internal Admin Notes</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminQuotationsPage-field-2"
+                >
+                  Internal Admin Notes
+                </label>
                 <textarea
                   rows={3}
                   value={notesInput}
+                  id="AdminQuotationsPage-field-2"
                   onChange={(e) => setNotesInput(e.target.value)}
                   placeholder="Requires custom Google Calendar integration; 7-day turnaround agreed."
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none"
@@ -252,6 +319,8 @@ export const AdminQuotationsPage: React.FC = () => {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
+                  data-dialog-close
+                  aria-label="Close"
                   onClick={() => setEditingQuote(null)}
                   className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold text-muted-foreground hover:text-white"
                 >

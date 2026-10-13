@@ -1,3 +1,5 @@
+import { listRecords } from '../utils/listRecords';
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { FAQ } from '../models/FAQ';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -11,13 +13,8 @@ export const getActiveFAQs = async (_req: Request, res: Response): Promise<void>
   }
 };
 
-export const getAllFAQsAdmin = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const faqs = await FAQ.find().sort({ orderIndex: 1 });
-    sendSuccess(res, faqs, 'All FAQs retrieved.');
-  } catch (err: any) {
-    sendError(res, err.message, 500);
-  }
+export const getAllFAQsAdmin = async (req: Request, res: Response): Promise<void> => {
+  await listRecords(req, res, FAQ, ['question', 'answer'], {}, { orderIndex: 1 });
 };
 
 export const createFAQ = async (req: Request, res: Response): Promise<void> => {
@@ -46,7 +43,7 @@ export const createFAQ = async (req: Request, res: Response): Promise<void> => {
 export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const faq = await FAQ.findByIdAndUpdate(id, req.body, { new: true });
+    const faq = await FAQ.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
     if (!faq) {
       sendError(res, 'FAQ not found.', 404);
       return;

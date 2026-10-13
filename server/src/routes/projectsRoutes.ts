@@ -1,8 +1,14 @@
-import { Router } from 'express';
-import { getProjects, getProjectBySlug, createProject, updateProject, deleteProject } from '../controllers/projectsController';
+import { asyncRouter } from '../utils/asyncRouter';
+import {
+  getProjects,
+  getProjectBySlug,
+  createProject,
+  updateProject,
+  deleteProject,
+} from '../controllers/projectsController';
 import { authenticateAdmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes
 router.get('/', getProjects);

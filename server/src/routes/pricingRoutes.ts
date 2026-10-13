@@ -1,8 +1,14 @@
-import { Router } from 'express';
-import { getPricingPlans, getAllPricingPlansAdmin, createPricingPlan, updatePricingPlan, deletePricingPlan } from '../controllers/pricingController';
+import { asyncRouter } from '../utils/asyncRouter';
+import {
+  getPricingPlans,
+  getAllPricingPlansAdmin,
+  createPricingPlan,
+  updatePricingPlan,
+  deletePricingPlan,
+} from '../controllers/pricingController';
 import { authenticateAdmin } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = asyncRouter();
 
 // Public routes
 router.get('/', getPricingPlans);

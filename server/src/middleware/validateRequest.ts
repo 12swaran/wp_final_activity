@@ -9,7 +9,9 @@ export const validateRequest = (schema: ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+        const errorMessages = error.errors
+          .map((e) => `${e.path.join('.')}: ${e.message}`)
+          .join(', ');
         sendError(res, errorMessages, 400, 'Validation Failed');
         return;
       }

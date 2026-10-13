@@ -1,8 +1,10 @@
+import { useSettings } from '../../context/SettingsContext';
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ArrowRight, Sparkles } from 'lucide-react';
 
 export const Header: React.FC = () => {
+  const { settings } = useSettings();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -22,12 +24,18 @@ export const Header: React.FC = () => {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white group">
+        <Link
+          to="/"
+          className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white group"
+        >
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20 text-primary border border-primary/30 group-hover:bg-primary group-hover:text-white transition-all">
             <Sparkles className="h-4 w-4" />
           </span>
           <span>
-            Teja<span className="text-primary font-black">.</span>Studio
+            {settings.logoUrl && (
+              <img src={settings.logoUrl} alt="" className="h-8 w-8 object-contain inline mr-2" />
+            )}
+            {settings.studioName}
           </span>
         </Link>
 
@@ -44,7 +52,7 @@ export const Header: React.FC = () => {
               {link.label}
             </Link>
           ))}
-          
+
           <div className="flex items-center gap-3 ml-2">
             <Link
               to="/book"
@@ -66,6 +74,8 @@ export const Header: React.FC = () => {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-white"
           aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
@@ -73,7 +83,10 @@ export const Header: React.FC = () => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="border-b border-border bg-card/95 backdrop-blur-2xl px-6 py-6 md:hidden animate-fade-in">
+        <div
+          id="mobile-navigation"
+          className="border-b border-border bg-card/95 backdrop-blur-2xl px-6 py-6 md:hidden animate-fade-in"
+        >
           <div className="flex flex-col space-y-4">
             {navLinks.map((link) => (
               <Link

@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Testimonial } from '../models/Testimonial';
+import { asyncRouter } from '../utils/asyncRouter';
 import {
   getApprovedTestimonials,
   submitReview,
@@ -9,7 +10,19 @@ import {
 import { authenticateAdmin } from '../middleware/authMiddleware';
 import { formSubmissionRateLimiter } from '../middleware/rateLimiter';
 
-const router = Router();
+const router = asyncRouter();
+router.post('/admin', authenticateAdmin, async (req, res) => {
+  const review = await Testimonial.create(req.body);
+  res.status(201).json({ success: true, data: review });
+});
+router.put('/:id', authenticateAdmin, async (req, res) => {
+  const review = await Testimonial.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+  if (!review) return void res.status(404).json({ success: false, error: 'Review not found.' });
+  res.json({ success: true, data: review });
+});
 
 // Public routes
 router.get('/', getApprovedTestimonials);

@@ -1,3 +1,5 @@
+import { Field as ListSearch, Pagination as ListPages } from '../../components/common/Forms';
+import { api } from '../../services/api';
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { PricingPlan } from '../../types';
@@ -5,6 +7,9 @@ import { pricingApi } from '../../services/api';
 
 export const AdminPricingPage: React.FC = () => {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [listPage, setListPage] = useState(1),
+    [listPages, setListPages] = useState(1),
+    [listSearch, setListSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Modal State
@@ -23,16 +28,18 @@ export const AdminPricingPage: React.FC = () => {
 
   const fetchPlans = () => {
     setLoading(true);
-    pricingApi
-      .getAllAdmin()
-      .then((data) => setPlans(data || []))
+    api
+      .get('/pricing/admin/all', { params: { page: listPage, limit: 20, search: listSearch } })
+      .then((res) => {
+        setPlans(res.data.data || []);
+        setListPages(res.data.meta?.totalPages || 1);
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   };
-
   useEffect(() => {
     fetchPlans();
-  }, []);
+  }, [listPage, listSearch]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -112,10 +119,21 @@ export const AdminPricingPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <ListSearch
+        label="Search records"
+        value={listSearch}
+        onChange={(value) => {
+          setListSearch(value);
+          setListPage(1);
+        }}
+      />
+      <ListPages page={listPage} totalPages={listPages} onChange={setListPage} />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Pricing Packages</h1>
-          <p className="text-xs text-muted-foreground mt-1">Manage tiers, featured badges, price points, and included checklist features.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manage tiers, featured badges, price points, and included checklist features.
+          </p>
         </div>
         <button
           onClick={openCreate}
@@ -151,7 +169,9 @@ export const AdminPricingPage: React.FC = () => {
                 <p className="text-xs text-muted-foreground">{plan.description}</p>
                 <div className="mt-4 font-display text-3xl font-bold text-white">
                   ${plan.price}
-                  <span className="text-xs text-muted-foreground font-normal ml-1">{plan.billingCycle}</span>
+                  <span className="text-xs text-muted-foreground font-normal ml-1">
+                    {plan.billingCycle}
+                  </span>
                 </div>
 
                 <ul className="mt-6 space-y-2 text-xs">
@@ -188,9 +208,19 @@ export const AdminPricingPage: React.FC = () => {
 
       {/* Plan Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto">
-          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative my-8">
-            <button onClick={() => setModalOpen(false)} className="absolute top-5 right-5 text-muted-foreground hover:text-white">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit record"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in overflow-y-auto"
+        >
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-3xl border border-border bg-card p-6 md:p-8 shadow-2xl relative my-8">
+            <button
+              data-dialog-close
+              aria-label="Close"
+              onClick={() => setModalOpen(false)}
+              className="absolute top-5 right-5 text-muted-foreground hover:text-white"
+            >
               <X className="h-5 w-5" />
             </button>
             <h3 className="text-lg font-bold text-white mb-4">
@@ -200,22 +230,34 @@ export const AdminPricingPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Plan Name *</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminPricingPage-field-0"
+                  >
+                    Plan Name *
+                  </label>
                   <input
                     type="text"
                     required
                     value={name}
+                    id="AdminPricingPage-field-0"
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Business"
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Price ($) *</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminPricingPage-field-1"
+                  >
+                    Price ($) *
+                  </label>
                   <input
                     type="number"
                     required
                     value={price}
+                    id="AdminPricingPage-field-1"
                     onChange={(e) => setPrice(Number(e.target.value))}
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono"
                   />
@@ -223,11 +265,17 @@ export const AdminPricingPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Description *</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminPricingPage-field-2"
+                >
+                  Description *
+                </label>
                 <input
                   type="text"
                   required
                   value={description}
+                  id="AdminPricingPage-field-2"
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Most popular for small businesses..."
                   className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -236,20 +284,32 @@ export const AdminPricingPage: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Badge Tag</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminPricingPage-field-3"
+                  >
+                    Badge Tag
+                  </label>
                   <input
                     type="text"
                     value={badge}
+                    id="AdminPricingPage-field-3"
                     onChange={(e) => setBadge(e.target.value)}
                     placeholder="MOST POPULAR"
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-white mb-1">Button CTA Text</label>
+                  <label
+                    className="block text-xs font-medium text-white mb-1"
+                    htmlFor="AdminPricingPage-field-4"
+                  >
+                    Button CTA Text
+                  </label>
                   <input
                     type="text"
                     value={ctaText}
+                    id="AdminPricingPage-field-4"
                     onChange={(e) => setCtaText(e.target.value)}
                     placeholder="Get Started"
                     className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -258,10 +318,16 @@ export const AdminPricingPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-white mb-1">Features (One per line)</label>
+                <label
+                  className="block text-xs font-medium text-white mb-1"
+                  htmlFor="AdminPricingPage-field-5"
+                >
+                  Features (One per line)
+                </label>
                 <textarea
                   rows={5}
                   value={featuresText}
+                  id="AdminPricingPage-field-5"
                   onChange={(e) => setFeaturesText(e.target.value)}
                   placeholder="Up to 5 pages&#10;Custom design for your brand&#10;Contact & booking forms&#10;Delivered in 7 days"
                   className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none font-mono"
@@ -283,6 +349,8 @@ export const AdminPricingPage: React.FC = () => {
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
+                  data-dialog-close
+                  aria-label="Close"
                   onClick={() => setModalOpen(false)}
                   className="rounded-full border border-border bg-card px-5 py-2 text-xs font-semibold text-muted-foreground hover:text-white"
                 >

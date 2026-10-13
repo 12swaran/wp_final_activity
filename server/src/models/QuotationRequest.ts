@@ -1,6 +1,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IQuotationRequest extends Document {
+  businessType?: string;
+  attachments: mongoose.Types.ObjectId[];
+  proposal: string;
   name: string;
   email: string;
   phone?: string;
@@ -20,6 +23,9 @@ export interface IQuotationRequest extends Document {
 
 const QuotationRequestSchema = new Schema<IQuotationRequest>(
   {
+    businessType: String,
+    attachments: [{ type: Schema.Types.ObjectId, ref: 'Upload' }],
+    proposal: { type: String, default: '' },
     name: {
       type: String,
       required: true,
@@ -82,9 +88,12 @@ const QuotationRequestSchema = new Schema<IQuotationRequest>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 QuotationRequestSchema.index({ status: 1, createdAt: -1 });
 
-export const QuotationRequest = mongoose.model<IQuotationRequest>('QuotationRequest', QuotationRequestSchema);
+export const QuotationRequest = mongoose.model<IQuotationRequest>(
+  'QuotationRequest',
+  QuotationRequestSchema,
+);

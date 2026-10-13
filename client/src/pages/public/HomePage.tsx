@@ -41,7 +41,10 @@ export const HomePage: React.FC = () => {
       try {
         const [servData, projData, priceData, faqData, testData] = await Promise.all([
           servicesApi.getAll().catch(() => []),
-          projectsApi.getAll({ limit: 3 }).then((res) => res.data).catch(() => []),
+          projectsApi
+            .getAll({ limit: 3 })
+            .then((res) => res.data)
+            .catch(() => []),
           pricingApi.getAll().catch(() => []),
           faqApi.getActive().catch(() => []),
           testimonialsApi.getApproved().catch(() => []),
@@ -89,7 +92,8 @@ export const HomePage: React.FC = () => {
 
           {/* Subtitle */}
           <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground md:text-lg leading-relaxed">
-            I build simple, fast, modern websites for small businesses and startups — live in days, not months.
+            I build simple, fast, modern websites for small businesses and startups — live in days,
+            not months.
           </p>
 
           {/* Call to Action Buttons */}
@@ -112,10 +116,14 @@ export const HomePage: React.FC = () => {
           <div className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-6 border-t border-border/40 pt-10">
             <div>
               <div className="font-display text-2xl font-bold text-primary md:text-3xl">25+</div>
-              <div className="mt-1 text-xs text-muted-foreground md:text-sm">Websites delivered</div>
+              <div className="mt-1 text-xs text-muted-foreground md:text-sm">
+                Websites delivered
+              </div>
             </div>
             <div>
-              <div className="font-display text-2xl font-bold text-primary md:text-3xl">5–7 days</div>
+              <div className="font-display text-2xl font-bold text-primary md:text-3xl">
+                5–7 days
+              </div>
               <div className="mt-1 text-xs text-muted-foreground md:text-sm">Average delivery</div>
             </div>
             <div>
@@ -169,7 +177,8 @@ export const HomePage: React.FC = () => {
               to="/services"
               className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
             >
-              Explore detailed service specifications and deliverables <ArrowRight className="h-4 w-4" />
+              Explore detailed service specifications and deliverables{' '}
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -181,8 +190,12 @@ export const HomePage: React.FC = () => {
       <section id="work" className="border-t border-border py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
-            <p className="text-sm font-medium tracking-widest text-primary uppercase">Recent work</p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">Websites that get real results</h2>
+            <p className="text-sm font-medium tracking-widest text-primary uppercase">
+              Recent work
+            </p>
+            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">
+              Websites that get real results
+            </h2>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
@@ -202,7 +215,9 @@ export const HomePage: React.FC = () => {
                 </div>
                 <div className="p-6 flex-1 flex flex-col justify-between">
                   <div>
-                    <p className="text-xs font-medium tracking-wide text-primary uppercase">{project.category}</p>
+                    <p className="text-xs font-medium tracking-wide text-primary uppercase">
+                      {project.category}
+                    </p>
                     <h3 className="mt-1 text-lg font-semibold text-white group-hover:text-primary transition-colors">
                       {project.title}
                     </h3>
@@ -212,7 +227,10 @@ export const HomePage: React.FC = () => {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-border/50">
                     {project.technologies.slice(0, 3).map((tech, idx) => (
-                      <span key={idx} className="rounded-md bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+                      <span
+                        key={idx}
+                        className="rounded-md bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground"
+                      >
                         {tech}
                       </span>
                     ))}
@@ -240,7 +258,9 @@ export const HomePage: React.FC = () => {
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
             <p className="text-sm font-medium tracking-widest text-primary uppercase">Pricing</p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">Simple, honest pricing</h2>
+            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">
+              Simple, honest pricing
+            </h2>
             <p className="mx-auto mt-4 max-w-md text-muted-foreground">
               One-time payment. No hidden fees. You own your website forever.
             </p>
@@ -317,8 +337,12 @@ export const HomePage: React.FC = () => {
       <section id="process" className="border-t border-border py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
-            <p className="text-sm font-medium tracking-widest text-primary uppercase">How it works</p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">From idea to launch in 3 steps</h2>
+            <p className="text-sm font-medium tracking-widest text-primary uppercase">
+              How it works
+            </p>
+            <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">
+              From idea to launch in 3 steps
+            </h2>
           </div>
 
           <div className="grid gap-8 md:grid-cols-3">
@@ -326,7 +350,8 @@ export const HomePage: React.FC = () => {
               <div className="font-display text-4xl font-bold text-primary/40">01</div>
               <h3 className="mt-4 text-lg font-semibold text-white">Tell me about your business</h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                A quick discovery chat about what you do, who your ideal customers are, and what goals your website needs to achieve.
+                A quick discovery chat about what you do, who your ideal customers are, and what
+                goals your website needs to achieve.
               </p>
             </div>
 
@@ -334,7 +359,8 @@ export const HomePage: React.FC = () => {
               <div className="font-display text-4xl font-bold text-primary/40">02</div>
               <h3 className="mt-4 text-lg font-semibold text-white">I design &amp; build</h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                You get an interactive live staging preview within 3 to 5 days, and we refine the copy, layout, and styling together.
+                You get an interactive live staging preview within 3 to 5 days, and we refine the
+                copy, layout, and styling together.
               </p>
             </div>
 
@@ -342,7 +368,8 @@ export const HomePage: React.FC = () => {
               <div className="font-display text-4xl font-bold text-primary/40">03</div>
               <h3 className="mt-4 text-lg font-semibold text-white">Launch &amp; grow</h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Your site goes live with secure SSL, fast DNS routing, and Google indexing. Plus free ongoing support to ensure peace of mind.
+                Your site goes live with secure SSL, fast DNS routing, and Google indexing. Plus
+                free ongoing support to ensure peace of mind.
               </p>
             </div>
           </div>
@@ -356,13 +383,20 @@ export const HomePage: React.FC = () => {
         <section className="border-t border-border py-20 md:py-28 bg-card/20">
           <div className="mx-auto max-w-6xl px-6">
             <div className="mb-14 text-center">
-              <p className="text-sm font-medium tracking-widest text-primary uppercase">Social Proof</p>
-              <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">Trusted by business owners</h2>
+              <p className="text-sm font-medium tracking-widest text-primary uppercase">
+                Social Proof
+              </p>
+              <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">
+                Trusted by business owners
+              </h2>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
               {testimonials.slice(0, 3).map((item) => (
-                <div key={item._id} className="rounded-2xl border border-border bg-card p-7 flex flex-col justify-between">
+                <div
+                  key={item._id}
+                  className="rounded-2xl border border-border bg-card p-7 flex flex-col justify-between"
+                >
                   <div>
                     <div className="flex items-center gap-1 text-amber-400 mb-3">
                       {[...Array(item.rating || 5)].map((_, i) => (
@@ -375,7 +409,11 @@ export const HomePage: React.FC = () => {
                   </div>
                   <div className="mt-6 flex items-center gap-3 pt-4 border-t border-border/50">
                     {item.avatarUrl ? (
-                      <img src={item.avatarUrl} alt={item.clientName} className="h-10 w-10 rounded-full object-cover" />
+                      <img
+                        src={item.avatarUrl}
+                        alt={item.clientName}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-bold">
                         {item.clientName.charAt(0)}
@@ -383,7 +421,9 @@ export const HomePage: React.FC = () => {
                     )}
                     <div>
                       <h4 className="text-sm font-semibold text-white">{item.clientName}</h4>
-                      <p className="text-xs text-muted-foreground">{item.company} • {item.role}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.company} • {item.role}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -407,7 +447,9 @@ export const HomePage: React.FC = () => {
           <div className="mx-auto max-w-3xl px-6">
             <div className="mb-14 text-center">
               <p className="text-sm font-medium tracking-widest text-primary uppercase">FAQs</p>
-              <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">Frequently asked questions</h2>
+              <h2 className="mt-3 text-3xl font-bold md:text-4xl text-white">
+                Frequently asked questions
+              </h2>
             </div>
 
             <div className="space-y-4">
@@ -437,7 +479,10 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="mt-8 text-center">
-              <Link to="/faqs" className="text-xs text-muted-foreground hover:text-primary underline">
+              <Link
+                to="/faqs"
+                className="text-xs text-muted-foreground hover:text-primary underline"
+              >
                 Browse all FAQs categorized by process, pricing, and technical setup →
               </Link>
             </div>
@@ -448,13 +493,17 @@ export const HomePage: React.FC = () => {
       {/* ======================================================== */}
       {/* 8. CALL TO ACTION BANNER                                 */}
       {/* ======================================================== */}
-      <section id="contact" className="border-t border-border py-20 md:py-28 bg-gradient-to-b from-card/30 to-background">
+      <section
+        id="contact"
+        className="border-t border-border py-20 md:py-28 bg-gradient-to-b from-card/30 to-background"
+      >
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="text-3xl font-bold md:text-5xl text-white">
             Ready to get your business <span className="text-gradient">online?</span>
           </h2>
           <p className="mx-auto mt-6 max-w-lg text-muted-foreground leading-relaxed">
-            Tell me about your project and I'll get back to you within 24 hours with a free quote and timeline.
+            Tell me about your project and I'll get back to you within 24 hours with a free quote
+            and timeline.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

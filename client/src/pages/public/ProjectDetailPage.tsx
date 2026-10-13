@@ -1,3 +1,4 @@
+import { MarkdownContent } from '../../components/common/MarkdownContent';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Code2, CheckCircle2, Calendar, Sparkles } from 'lucide-react';
@@ -42,7 +43,10 @@ export const ProjectDetailPage: React.FC = () => {
   return (
     <div className="pt-32 pb-24">
       <div className="mx-auto max-w-4xl px-6">
-        <Link to="/portfolio" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8">
+        <Link
+          to="/portfolio"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to All Projects
         </Link>
 
@@ -77,7 +81,9 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold text-white">{project.title}</h1>
-          <p className="text-sm text-muted-foreground mt-2">Client: <span className="text-foreground">{project.clientName}</span></p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Client: <span className="text-foreground">{project.clientName}</span>
+          </p>
 
           {/* Outcome Metric Callout */}
           {project.resultStat && (
@@ -89,15 +95,24 @@ export const ProjectDetailPage: React.FC = () => {
 
           {/* Featured Image */}
           <div className="mt-8 rounded-2xl overflow-hidden border border-border aspect-video bg-secondary">
-            <img src={project.featuredImage} alt={project.title} className="w-full h-full object-cover" />
+            <img
+              src={project.featuredImage}
+              alt={project.title}
+              className="w-full h-full object-cover"
+            />
           </div>
 
           {/* Tech Stack Chips */}
           <div className="mt-8 pb-6 border-b border-border">
-            <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Technologies Deployed</h3>
+            <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">
+              Technologies Deployed
+            </h3>
             <div className="flex flex-wrap gap-2">
               {project.technologies.map((tech, idx) => (
-                <span key={idx} className="rounded-lg bg-secondary border border-border px-3 py-1 text-xs text-foreground font-medium">
+                <span
+                  key={idx}
+                  className="rounded-lg bg-secondary border border-border px-3 py-1 text-xs text-foreground font-medium"
+                >
                   {tech}
                 </span>
               ))}
@@ -107,7 +122,9 @@ export const ProjectDetailPage: React.FC = () => {
           {/* Case Study Written Content */}
           <div className="mt-8 space-y-6">
             <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {project.caseStudyMarkdown || 'Comprehensive case study details coming soon.'}
+              <MarkdownContent>
+                {project.caseStudyMarkdown || 'Comprehensive case study details coming soon.'}
+              </MarkdownContent>
             </div>
 
             {/* Gallery Images */}
@@ -116,8 +133,15 @@ export const ProjectDetailPage: React.FC = () => {
                 <h3 className="text-lg font-bold text-white mb-4">Project Gallery</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {project.galleryImages.map((imgUrl, idx) => (
-                    <div key={idx} className="rounded-xl overflow-hidden border border-border aspect-video bg-secondary">
-                      <img src={imgUrl} alt={`${project.title} gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div
+                      key={idx}
+                      className="rounded-xl overflow-hidden border border-border aspect-video bg-secondary"
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={`${project.title} gallery ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ))}
                 </div>
@@ -126,15 +150,24 @@ export const ProjectDetailPage: React.FC = () => {
 
             {/* CTA */}
             <div className="mt-12 rounded-2xl border border-primary/30 bg-primary/10 p-8 text-center">
-              <h3 className="text-xl font-bold text-white">Want similar results for your business?</h3>
+              <h3 className="text-xl font-bold text-white">
+                Want similar results for your business?
+              </h3>
               <p className="mt-2 text-xs text-muted-foreground">
-                We can architect a high-performance website tailored specifically to your niche within 7 days.
+                We can architect a high-performance website tailored specifically to your niche
+                within 7 days.
               </p>
               <div className="mt-5 flex justify-center gap-3">
-                <Link to="/quote" className="rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-glow">
+                <Link
+                  to="/quote"
+                  className="rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-glow"
+                >
                   Request a Free Quote
                 </Link>
-                <Link to="/book" className="rounded-full border border-border bg-card px-6 py-2.5 text-xs font-semibold text-white hover:bg-secondary">
+                <Link
+                  to="/book"
+                  className="rounded-full border border-border bg-card px-6 py-2.5 text-xs font-semibold text-white hover:bg-secondary"
+                >
                   Schedule Call
                 </Link>
               </div>

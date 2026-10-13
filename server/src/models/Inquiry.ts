@@ -7,6 +7,9 @@ export interface IInquiryReply {
 }
 
 export interface IInquiry extends Document {
+  businessType?: string;
+  service?: string;
+  budget?: string;
   name: string;
   email: string;
   phone?: string;
@@ -22,6 +25,9 @@ export interface IInquiry extends Document {
 
 const InquirySchema = new Schema<IInquiry>(
   {
+    businessType: String,
+    service: String,
+    budget: String,
     name: {
       type: String,
       required: true,
@@ -70,7 +76,7 @@ const InquirySchema = new Schema<IInquiry>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 InquirySchema.index({ status: 1, createdAt: -1 });

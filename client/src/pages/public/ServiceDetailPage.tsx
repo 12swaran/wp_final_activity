@@ -42,7 +42,10 @@ export const ServiceDetailPage: React.FC = () => {
   return (
     <div className="pt-32 pb-24">
       <div className="mx-auto max-w-4xl px-6">
-        <Link to="/services" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8">
+        <Link
+          to="/services"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-white mb-8"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Services
         </Link>
 
@@ -54,13 +57,19 @@ export const ServiceDetailPage: React.FC = () => {
                 Service Specification
               </span>
               <h1 className="text-3xl md:text-5xl font-bold text-white">{service.title}</h1>
-              <p className="mt-3 text-base text-muted-foreground max-w-xl">{service.shortDescription}</p>
+              <p className="mt-3 text-base text-muted-foreground max-w-xl">
+                {service.shortDescription}
+              </p>
             </div>
             {service.startingPrice > 0 && (
               <div className="rounded-2xl border border-primary/30 bg-primary/10 p-6 text-center shrink-0">
                 <span className="text-xs text-muted-foreground block">Starting Price</span>
-                <span className="text-3xl font-display font-bold text-white">${service.startingPrice}</span>
-                <span className="text-[11px] text-muted-foreground block mt-1">One-time payment</span>
+                <span className="text-3xl font-display font-bold text-white">
+                  ${service.startingPrice}
+                </span>
+                <span className="text-[11px] text-muted-foreground block mt-1">
+                  One-time payment
+                </span>
               </div>
             )}
           </div>
@@ -68,7 +77,9 @@ export const ServiceDetailPage: React.FC = () => {
           {/* Full Description & Scope */}
           <div className="mt-8 space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-white mb-3">Service Scope &amp; Architecture</h2>
+              <h2 className="text-xl font-bold text-white mb-3">
+                Service Scope &amp; Architecture
+              </h2>
               <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">
                 {service.fullDescription || service.shortDescription}
               </p>
@@ -80,7 +91,10 @@ export const ServiceDetailPage: React.FC = () => {
                 <h3 className="text-lg font-bold text-white mb-4">Core Deliverables</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {service.deliverables.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-3 rounded-xl border border-border bg-secondary/50 p-4">
+                    <div
+                      key={idx}
+                      className="flex items-start gap-3 rounded-xl border border-border bg-secondary/50 p-4"
+                    >
                       <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       <span className="text-xs text-foreground leading-relaxed">{item}</span>
                     </div>

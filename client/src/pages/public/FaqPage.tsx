@@ -22,7 +22,8 @@ export const FaqPage: React.FC = () => {
   const categories = ['All', 'General', 'Pricing', 'Process', 'Technical'];
 
   const filteredFaqs = faqs.filter((faq) => {
-    const matchesCat = selectedCategory === 'All' || faq.category.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCat =
+      selectedCategory === 'All' || faq.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesSearch =
       faq.question.toLowerCase().includes(search.toLowerCase()) ||
       faq.answer.toLowerCase().includes(search.toLowerCase());
@@ -41,10 +42,13 @@ export const FaqPage: React.FC = () => {
       <div className="mx-auto max-w-4xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Help Center</p>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Help Center
+          </p>
           <h1 className="text-4xl font-bold md:text-5xl text-white">Frequently Asked Questions</h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Find immediate answers regarding delivery timelines, pricing, code ownership, technical setup, and post-launch maintenance.
+            Find immediate answers regarding delivery timelines, pricing, code ownership, technical
+            setup, and post-launch maintenance.
           </p>
         </div>
 
@@ -125,13 +129,20 @@ export const FaqPage: React.FC = () => {
           </div>
           <h3 className="text-xl font-bold text-white">Still have questions about your project?</h3>
           <p className="mt-2 text-xs text-muted-foreground max-w-md">
-            Click the live chat box in the bottom corner or book a 30-minute discovery consultation to talk through your requirements.
+            Click the live chat box in the bottom corner or book a 30-minute discovery consultation
+            to talk through your requirements.
           </p>
           <div className="mt-6 flex gap-3">
-            <Link to="/book" className="glow-card rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-glow">
+            <Link
+              to="/book"
+              className="glow-card rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-white shadow-glow"
+            >
               Book a Call
             </Link>
-            <Link to="/contact" className="rounded-full border border-border bg-secondary px-6 py-2.5 text-xs font-semibold text-white hover:bg-muted">
+            <Link
+              to="/contact"
+              className="rounded-full border border-border bg-secondary px-6 py-2.5 text-xs font-semibold text-white hover:bg-muted"
+            >
               Send Email
             </Link>
           </div>

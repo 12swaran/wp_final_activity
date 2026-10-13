@@ -1,3 +1,4 @@
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { Project } from '../models/Project';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -14,9 +15,9 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
 
     if (search) {
       query.$or = [
-        { title: { $regex: String(search), $options: 'i' } },
-        { clientName: { $regex: String(search), $options: 'i' } },
-        { technologies: { $in: [new RegExp(String(search), 'i')] } },
+        { title: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { clientName: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { technologies: { $in: [new RegExp(escapeRegex(String(search)), 'i')] } },
       ];
     }
 
@@ -25,10 +26,7 @@ export const getProjects = async (req: Request, res: Response): Promise<void> =>
     const skip = (pageNum - 1) * limitNum;
 
     const [projects, total] = await Promise.all([
-      Project.find(query)
-        .sort({ orderIndex: 1, createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum),
+      Project.find(query).sort({ orderIndex: 1, createdAt: -1 }).skip(skip).limit(limitNum),
       Project.countDocuments(query),
     ]);
 
@@ -59,7 +57,21 @@ export const getProjectBySlug = async (req: Request, res: Response): Promise<voi
 
 export const createProject = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, slug, category, clientName, resultStat, featuredImage, galleryImages, liveUrl, githubUrl, technologies, caseStudyMarkdown, isFeatured, orderIndex } = req.body;
+    const {
+      title,
+      slug,
+      category,
+      clientName,
+      resultStat,
+      featuredImage,
+      galleryImages,
+      liveUrl,
+      githubUrl,
+      technologies,
+      caseStudyMarkdown,
+      isFeatured,
+      orderIndex,
+    } = req.body;
 
     if (!title || !category || !clientName || !featuredImage) {
       sendError(res, 'Title, category, client name, and featured image are required.', 400);
@@ -107,7 +119,10 @@ export const updateProject = async (req: Request, res: Response): Promise<void> 
       updateData.slug = slugify(updateData.slug);
     }
 
-    const project = await Project.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    const project = await Project.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!project) {
       sendError(res, 'Project not found.', 404);
       return;

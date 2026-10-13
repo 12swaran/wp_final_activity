@@ -57,10 +57,15 @@ export const ReviewsPage: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Client Trust</p>
-          <h1 className="text-4xl font-bold md:text-5xl text-white">Client Reviews &amp; Testimonials</h1>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Client Trust
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl text-white">
+            Client Reviews &amp; Testimonials
+          </h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Real feedback from business owners and founders who launched their websites with Teja Web Studio.
+            Real feedback from business owners and founders who launched their websites with Teja
+            Web Studio.
           </p>
 
           <div className="mt-8 flex justify-center items-center gap-4">
@@ -69,7 +74,14 @@ export const ReviewsPage: React.FC = () => {
                 <Star key={i} className="h-5 w-5 fill-amber-400" />
               ))}
             </div>
-            <span className="text-sm font-bold text-white">5.0 / 5.0 Average Rating</span>
+            <span className="text-sm font-bold text-white">
+              {reviews.length
+                ? (
+                    reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
+                  ).toFixed(1)
+                : '—'}{' '}
+              / 5.0 Average Rating
+            </span>
           </div>
 
           <div className="mt-6">
@@ -110,7 +122,11 @@ export const ReviewsPage: React.FC = () => {
 
                 <div className="mt-6 pt-4 border-t border-border/50 flex items-center gap-3">
                   {rev.avatarUrl ? (
-                    <img src={rev.avatarUrl} alt={rev.clientName} className="h-9 w-9 rounded-full object-cover" />
+                    <img
+                      src={rev.avatarUrl}
+                      alt={rev.clientName}
+                      className="h-9 w-9 rounded-full object-cover"
+                    />
                   ) : (
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-xs">
                       {rev.clientName.charAt(0)}
@@ -118,7 +134,9 @@ export const ReviewsPage: React.FC = () => {
                   )}
                   <div>
                     <h4 className="text-xs font-bold text-white">{rev.clientName}</h4>
-                    <p className="text-[11px] text-muted-foreground">{rev.company} • {rev.role}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {rev.company} • {rev.role}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -142,7 +160,8 @@ export const ReviewsPage: React.FC = () => {
                   <CheckCircle2 className="h-12 w-12 text-emerald-400 mx-auto" />
                   <h3 className="text-xl font-bold text-white">Thank You for Your Feedback!</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Your review has been submitted for administrative moderation and will appear publicly once approved.
+                    Your review has been submitted for administrative moderation and will appear
+                    publicly once approved.
                   </p>
                   <button
                     onClick={() => setModalOpen(false)}
@@ -163,11 +182,17 @@ export const ReviewsPage: React.FC = () => {
                   )}
 
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Your Full Name *</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="ReviewsPage-field-0"
+                    >
+                      Your Full Name *
+                    </label>
                     <input
                       type="text"
                       required
                       value={clientName}
+                      id="ReviewsPage-field-0"
                       onChange={(e) => setClientName(e.target.value)}
                       placeholder="Sarah Jenkins"
                       className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -176,21 +201,33 @@ export const ReviewsPage: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] text-muted-foreground mb-1">Company / Project *</label>
+                      <label
+                        className="block text-[11px] text-muted-foreground mb-1"
+                        htmlFor="ReviewsPage-field-1"
+                      >
+                        Company / Project *
+                      </label>
                       <input
                         type="text"
                         required
                         value={company}
+                        id="ReviewsPage-field-1"
                         onChange={(e) => setCompany(e.target.value)}
                         placeholder="Bean & Bloom"
                         className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] text-muted-foreground mb-1">Role / Title</label>
+                      <label
+                        className="block text-[11px] text-muted-foreground mb-1"
+                        htmlFor="ReviewsPage-field-2"
+                      >
+                        Role / Title
+                      </label>
                       <input
                         type="text"
                         value={role}
+                        id="ReviewsPage-field-2"
                         onChange={(e) => setRole(e.target.value)}
                         placeholder="Founder"
                         className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-xs text-white focus:outline-none focus:border-primary"
@@ -199,7 +236,12 @@ export const ReviewsPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Rating</label>
+                    <label
+                      className="block text-[11px] text-muted-foreground mb-1"
+                      htmlFor="ReviewsPage-field-3"
+                    >
+                      Rating
+                    </label>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -219,11 +261,17 @@ export const ReviewsPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-muted-foreground mb-1">Review Message *</label>
+                    <label
+                      htmlFor="ReviewsPage-field-3"
+                      className="block text-[11px] text-muted-foreground mb-1"
+                    >
+                      Review Message *
+                    </label>
                     <textarea
                       required
                       rows={4}
                       value={reviewText}
+                      id="ReviewsPage-field-3"
                       onChange={(e) => setReviewText(e.target.value)}
                       placeholder="How was your experience working with Teja Web Studio? What were your project outcomes?"
                       className="w-full rounded-xl border border-border bg-secondary p-3 text-xs text-white focus:outline-none focus:border-primary resize-none"

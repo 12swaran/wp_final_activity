@@ -37,7 +37,7 @@ const FAQSchema = new Schema<IFAQ>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 FAQSchema.index({ category: 1, orderIndex: 1 });

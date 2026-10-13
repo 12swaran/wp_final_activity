@@ -1,13 +1,19 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ISetting extends Document {
+  logoUrl: string;
+  footerText: string;
+  brandColor: string;
+  timeZone: string;
+  cancellationHours: number;
+  pageSeo: Map<string, { title: string; description: string }>;
   studioName: string;
   tagline: string;
   contactEmail: string;
   whatsappNumber: string;
   businessHours: {
     start: string; // e.g., "09:00"
-    end: string;   // e.g., "18:00"
+    end: string; // e.g., "18:00"
     workDays: number[]; // 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
   };
   slotDurationMinutes: number; // e.g., 30
@@ -23,6 +29,16 @@ export interface ISetting extends Document {
 
 const SettingSchema = new Schema<ISetting>(
   {
+    logoUrl: { type: String, default: '' },
+    footerText: { type: String, default: 'Bespoke websites for startups and small businesses.' },
+    brandColor: { type: String, default: '#6366f1' },
+    timeZone: { type: String, default: 'Asia/Kolkata' },
+    cancellationHours: { type: Number, default: 24 },
+    pageSeo: {
+      type: Map,
+      of: new mongoose.Schema({ title: String, description: String }, { _id: false }),
+      default: {},
+    },
     studioName: {
       type: String,
       default: 'Teja Web Studio',
@@ -57,7 +73,7 @@ const SettingSchema = new Schema<ISetting>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const Setting = mongoose.model<ISetting>('Setting', SettingSchema);

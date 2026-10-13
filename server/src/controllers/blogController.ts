@@ -1,3 +1,5 @@
+import { listRecords } from '../utils/listRecords';
+import { escapeRegex } from '../utils/security';
 import { Request, Response } from 'express';
 import { BlogPost } from '../models/BlogPost';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -14,8 +16,8 @@ export const getPublishedPosts = async (req: Request, res: Response): Promise<vo
 
     if (search) {
       query.$or = [
-        { title: { $regex: String(search), $options: 'i' } },
-        { summary: { $regex: String(search), $options: 'i' } },
+        { title: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { summary: { $regex: escapeRegex(String(search)), $options: 'i' } },
       ];
     }
 
@@ -53,18 +55,23 @@ export const getPostBySlug = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getAllPostsAdmin = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const posts = await BlogPost.find().sort({ createdAt: -1 });
-    sendSuccess(res, posts, 'All articles retrieved for admin.');
-  } catch (err: any) {
-    sendError(res, err.message, 500);
-  }
+export const getAllPostsAdmin = async (req: Request, res: Response): Promise<void> => {
+  await listRecords(req, res, BlogPost, ['title', 'summary'], {}, { createdAt: -1 });
 };
 
 export const createBlogPost = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, slug, summary, content, coverImage, author, tags, readTimeMinutes, isPublished } = req.body;
+    const {
+      title,
+      slug,
+      summary,
+      content,
+      coverImage,
+      author,
+      tags,
+      readTimeMinutes,
+      isPublished,
+    } = req.body;
 
     if (!title || !summary || !content) {
       sendError(res, 'Title, summary, and content are required.', 400);
@@ -74,6 +81,8 @@ export const createBlogPost = async (req: Request, res: Response): Promise<void>
     const finalSlug = slug ? slugify(slug) : slugify(title);
 
     const post = await BlogPost.create({
+      seoTitle: req.body.seoTitle || '',
+      seoDescription: req.body.seoDescription || '',
       title,
       slug: finalSlug,
       summary,
@@ -105,7 +114,10 @@ export const updateBlogPost = async (req: Request, res: Response): Promise<void>
       updateData.slug = slugify(updateData.title);
     }
 
-    const post = await BlogPost.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+    const post = await BlogPost.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!post) {
       sendError(res, 'Article not found.', 404);
       return;

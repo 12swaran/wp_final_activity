@@ -1,9 +1,10 @@
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,28 +12,31 @@ export const api = axios.create({
 });
 
 // Request interceptor: attach Admin token if present
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('studio_admin_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor: handle 401 unauthorized automatically
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<any>) => {
-    if (error.response?.status === 401 && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+    if (
+      error.response?.status === 401 &&
+      window.location.pathname.startsWith('/admin') &&
+      window.location.pathname !== '/admin/login'
+    ) {
       localStorage.removeItem('studio_admin_token');
       localStorage.removeItem('studio_admin_user');
       window.location.href = '/admin/login';
     }
+    if (error.response?.status !== 401)
+      window.dispatchEvent(
+        new CustomEvent('api-error', {
+          detail:
+            error.response?.data?.error ||
+            error.response?.data?.message ||
+            'The server could not complete this request.',
+        }),
+      );
     return Promise.reject(error);
-  }
+  },
 );
 
 // Typed API Helper functions
@@ -66,8 +70,10 @@ export const inquiriesApi = {
   getAllAdmin: (params?: { status?: string; search?: string; page?: number; limit?: number }) =>
     api.get('/inquiries', { params }).then((res) => res.data),
   getById: (id: string) => api.get(`/inquiries/${id}`).then((res) => res.data.data),
-  updateStatus: (id: string, status: string) => api.put(`/inquiries/${id}/status`, { status }).then((res) => res.data.data),
-  reply: (id: string, replyMessage: string) => api.post(`/inquiries/${id}/reply`, { replyMessage }).then((res) => res.data.data),
+  updateStatus: (id: string, status: string) =>
+    api.put(`/inquiries/${id}/status`, { status }).then((res) => res.data.data),
+  reply: (id: string, replyMessage: string) =>
+    api.post(`/inquiries/${id}/reply`, { replyMessage }).then((res) => res.data.data),
   delete: (id: string) => api.delete(`/inquiries/${id}`).then((res) => res.data.data),
 };
 
@@ -76,16 +82,25 @@ export const quotationsApi = {
   getAllAdmin: (params?: { status?: string; search?: string; page?: number; limit?: number }) =>
     api.get('/quotations', { params }).then((res) => res.data),
   getById: (id: string) => api.get(`/quotations/${id}`).then((res) => res.data.data),
-  update: (id: string, data: any) => api.put(`/quotations/${id}`, data).then((res) => res.data.data),
+  update: (id: string, data: any) =>
+    api.put(`/quotations/${id}`, data).then((res) => res.data.data),
   delete: (id: string) => api.delete(`/quotations/${id}`).then((res) => res.data.data),
 };
 
 export const appointmentsApi = {
-  getAvailableSlots: (date: string) => api.get(`/appointments/available-slots?date=${date}`).then((res) => res.data.data),
+  getAvailableSlots: (date: string) =>
+    api.get(`/appointments/available-slots?date=${date}`).then((res) => res.data.data),
   book: (data: any) => api.post('/appointments', data).then((res) => res.data.data),
-  getAllAdmin: (params?: { status?: string; date?: string; startDate?: string; endDate?: string; page?: number; limit?: number }) =>
-    api.get('/appointments', { params }).then((res) => res.data),
-  update: (id: string, data: any) => api.put(`/appointments/${id}`, data).then((res) => res.data.data),
+  getAllAdmin: (params?: {
+    status?: string;
+    date?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/appointments', { params }).then((res) => res.data),
+  update: (id: string, data: any) =>
+    api.put(`/appointments/${id}`, data).then((res) => res.data.data),
   cancel: (id: string) => api.delete(`/appointments/${id}`).then((res) => res.data.data),
 };
 
@@ -119,13 +134,15 @@ export const faqApi = {
 export const chatApi = {
   initSession: (data: { sessionId: string; clientName?: string; clientEmail?: string }) =>
     api.post('/chat/session', data).then((res) => res.data.data),
-  getMessages: (sessionId: string) => api.get(`/chat/${sessionId}/messages`).then((res) => res.data.data),
+  getMessages: (sessionId: string) =>
+    api.get(`/chat/${sessionId}/messages`).then((res) => res.data.data),
   sendMessage: (sessionId: string, message: string, clientName?: string) =>
     api.post(`/chat/${sessionId}/message`, { message, clientName }).then((res) => res.data.data),
   getAdminConversations: () => api.get('/chat/admin/conversations').then((res) => res.data.data),
   sendAdminReply: (sessionId: string, message: string) =>
     api.post(`/chat/admin/${sessionId}/reply`, { message }).then((res) => res.data.data),
-  closeConversation: (sessionId: string) => api.put(`/chat/admin/${sessionId}/close`).then((res) => res.data.data),
+  closeConversation: (sessionId: string) =>
+    api.put(`/chat/admin/${sessionId}/close`).then((res) => res.data.data),
 };
 
 export const dashboardApi = {

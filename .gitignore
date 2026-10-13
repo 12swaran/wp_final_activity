@@ -34,3 +34,11 @@ yarn-error.log*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Automated verification artifacts
+test-results/
+playwright-report/
+# Reproducible dependency manifests
+!package-lock.json
+!client/package-lock.json
+!server/package-lock.json

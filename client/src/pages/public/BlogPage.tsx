@@ -24,10 +24,15 @@ export const BlogPage: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Insights &amp; Strategy</p>
-          <h1 className="text-4xl font-bold md:text-5xl text-white">Articles &amp; Practical Web Advice</h1>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Insights &amp; Strategy
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl text-white">
+            Articles &amp; Practical Web Advice
+          </h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Tips on speed optimization, mobile conversions, Core Web Vitals, and how to get real clients from your website.
+            Tips on speed optimization, mobile conversions, Core Web Vitals, and how to get real
+            clients from your website.
           </p>
         </div>
 
@@ -50,7 +55,10 @@ export const BlogPage: React.FC = () => {
               <span className="rounded-full bg-primary/20 text-primary px-3 py-1 font-semibold">
                 {selectedTag}
               </span>
-              <button onClick={() => setSelectedTag('')} className="text-xs text-muted-foreground hover:text-white underline">
+              <button
+                onClick={() => setSelectedTag('')}
+                className="text-xs text-muted-foreground hover:text-white underline"
+              >
                 Clear
               </button>
             </div>
@@ -90,7 +98,11 @@ export const BlogPage: React.FC = () => {
                       <Clock className="h-3.5 w-3.5" />
                       <span>{post.readTimeMinutes} min read</span>
                       <span>•</span>
-                      <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : 'Recent'}</span>
+                      <span>
+                        {post.publishedAt
+                          ? new Date(post.publishedAt).toLocaleDateString()
+                          : 'Recent'}
+                      </span>
                     </div>
 
                     <h2 className="text-lg font-bold text-white group-hover:text-primary transition-colors leading-snug">
@@ -103,7 +115,10 @@ export const BlogPage: React.FC = () => {
 
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {post.tags.map((t, i) => (
-                        <span key={i} className="rounded-md bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">
+                        <span
+                          key={i}
+                          className="rounded-md bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground"
+                        >
                           #{t}
                         </span>
                       ))}

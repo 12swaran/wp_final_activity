@@ -1,3 +1,4 @@
+import { escapeRegex, escapeHtml } from '../utils/security';
 import { Request, Response } from 'express';
 import { Inquiry } from '../models/Inquiry';
 import { sendSuccess, sendError } from '../utils/apiResponse';
@@ -15,6 +16,9 @@ export const submitInquiry = async (req: Request, res: Response): Promise<void> 
     }
 
     const inquiry = await Inquiry.create({
+      businessType: req.body.businessType,
+      service: req.body.service,
+      budget: req.body.budget,
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone ? phone.trim() : '',
@@ -27,6 +31,7 @@ export const submitInquiry = async (req: Request, res: Response): Promise<void> 
     // Send confirmation email to user asynchronously
     const confirmation = emailTemplates.inquiryConfirmation(inquiry.name, inquiry.subject);
     sendEmail({
+      referenceId: String(inquiry._id),
       to: inquiry.email,
       subject: confirmation.subject,
       html: confirmation.html,
@@ -35,18 +40,28 @@ export const submitInquiry = async (req: Request, res: Response): Promise<void> 
     // Send admin alert
     const adminAlert = emailTemplates.adminNewNotification(
       'Contact Inquiry',
-      `From: ${inquiry.name} (${inquiry.email})\nPhone: ${inquiry.phone || 'N/A'}\nSubject: ${inquiry.subject}\nMessage: ${inquiry.message}`
+      `From: ${escapeHtml(inquiry.name)} (${inquiry.email})\nPhone: ${inquiry.phone || 'N/A'}\nSubject: ${inquiry.subject}\nMessage: ${escapeHtml(inquiry.message)}`,
     );
     sendEmail({
+      referenceId: String(inquiry._id),
       to: env.ADMIN_NOTIFICATION_EMAIL,
       subject: adminAlert.subject,
       html: adminAlert.html,
     }).catch((err) => console.error('[Email Error] Admin notification failed:', err.message));
 
-    sendSuccess(res, { id: inquiry._id }, 'Your inquiry has been submitted successfully. We will get back to you shortly!', 201);
+    sendSuccess(
+      res,
+      { id: inquiry._id },
+      'Your inquiry has been submitted successfully. We will get back to you shortly!',
+      201,
+    );
   } catch (err: any) {
     if (err.code === 11000) {
-      sendSuccess(res, { message: 'Submission already received.' }, 'Your inquiry has already been received.');
+      sendSuccess(
+        res,
+        { message: 'Submission already received.' },
+        'Your inquiry has already been received.',
+      );
       return;
     }
     sendError(res, err.message, 500);
@@ -64,9 +79,9 @@ export const getInquiries = async (req: Request, res: Response): Promise<void> =
 
     if (search) {
       query.$or = [
-        { name: { $regex: String(search), $options: 'i' } },
-        { email: { $regex: String(search), $options: 'i' } },
-        { subject: { $regex: String(search), $options: 'i' } },
+        { name: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { email: { $regex: escapeRegex(String(search)), $options: 'i' } },
+        { subject: { $regex: escapeRegex(String(search)), $options: 'i' } },
       ];
     }
 
@@ -114,7 +129,11 @@ export const updateInquiryStatus = async (req: Request, res: Response): Promise<
       return;
     }
 
-    const inquiry = await Inquiry.findByIdAndUpdate(id, { status }, { new: true });
+    const inquiry = await Inquiry.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true },
+    );
     if (!inquiry) {
       sendError(res, 'Inquiry not found.', 404);
       return;
@@ -159,6 +178,7 @@ export const replyToInquiry = async (req: AuthenticatedRequest, res: Response): 
 
     // Send email to client
     await sendEmail({
+      referenceId: String(inquiry._id),
       to: inquiry.email,
       subject: `Reply: ${inquiry.subject} — Teja Web Studio`,
       html: `
@@ -166,7 +186,7 @@ export const replyToInquiry = async (req: AuthenticatedRequest, res: Response): 
           <h2 style="color: #4f46e5;">Teja Web Studio</h2>
           <p>Hi ${inquiry.name},</p>
           <div style="background: #ffffff; padding: 15px; border-left: 4px solid #4f46e5; margin: 15px 0; border-radius: 4px;">
-            ${replyMessage.replace(/\n/g, '<br/>')}
+            ${escapeHtml(replyMessage).replace(/\n/g, '<br/>')}
           </div>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;"/>
           <p style="color: #64748b; font-size: 13px;">Original message:<br/><em>${inquiry.message}</em></p>
@@ -175,7 +195,7 @@ export const replyToInquiry = async (req: AuthenticatedRequest, res: Response): 
       `,
     });
 
-    sendSuccess(res, inquiry, 'Reply sent and logged successfully.');
+    sendSuccess(res, inquiry, 'Reply recorded. Email delivery is deferred unless configured.');
   } catch (err: any) {
     sendError(res, err.message, 500);
   }

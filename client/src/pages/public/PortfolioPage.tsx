@@ -10,7 +10,14 @@ export const PortfolioPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  const categories = ['All', 'Coffee Shop & Bakery', 'Fitness Studio & Gym', 'Agency Website', 'E-Commerce', 'SaaS'];
+  const categories = [
+    'All',
+    'Coffee Shop & Bakery',
+    'Fitness Studio & Gym',
+    'Agency Website',
+    'E-Commerce',
+    'SaaS',
+  ];
 
   useEffect(() => {
     setLoading(true);
@@ -32,10 +39,15 @@ export const PortfolioPage: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">Portfolio &amp; Case Studies</p>
-          <h1 className="text-4xl font-bold md:text-5xl text-white">Proven Websites with Measurable Outcomes</h1>
+          <p className="text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            Portfolio &amp; Case Studies
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl text-white">
+            Proven Websites with Measurable Outcomes
+          </h1>
           <p className="mt-4 text-muted-foreground text-sm leading-relaxed">
-            Take a look behind the scenes of websites built for real businesses that resulted in higher booking rates, orders, and local search presence.
+            Take a look behind the scenes of websites built for real businesses that resulted in
+            higher booking rates, orders, and local search presence.
           </p>
         </div>
 
@@ -80,7 +92,10 @@ export const PortfolioPage: React.FC = () => {
           <div className="py-20 text-center">
             <p className="text-muted-foreground">No projects match your filter criteria.</p>
             <button
-              onClick={() => { setSelectedCategory('All'); setSearchQuery(''); }}
+              onClick={() => {
+                setSelectedCategory('All');
+                setSearchQuery('');
+              }}
               className="mt-3 text-xs text-primary hover:underline"
             >
               Reset filters
@@ -107,15 +122,22 @@ export const PortfolioPage: React.FC = () => {
                   </div>
 
                   <div className="p-6">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wider">{project.category}</p>
+                    <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      {project.category}
+                    </p>
                     <h3 className="mt-1 text-xl font-bold text-white group-hover:text-primary transition-colors">
                       {project.title}
                     </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Client: {project.clientName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Client: {project.clientName}
+                    </p>
 
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {project.technologies.map((tech, idx) => (
-                        <span key={idx} className="rounded-md bg-secondary border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+                        <span
+                          key={idx}
+                          className="rounded-md bg-secondary border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
                           {tech}
                         </span>
                       ))}
