@@ -77,4 +77,3 @@ The Vercel project is `wp-final-activity`. Set production environment variables 
 The chatbot answers studio and website questions using published services, active pricing, FAQs, and settings in MongoDB. It refuses detected off-topic prompts and falls back to published services, active prices, relevant FAQs, or booking and quotation guidance when the model is unavailable or returns an unusable answer. The free OpenRouter router may vary in quality and availability.
 
 Vercel CLI deployment does not by itself set up GitHub automatic deployments. Connect GitHub in Vercel account settings when the account has a GitHub login connection. Code is also pushed separately to `wp_final_activity` via Git.
-
