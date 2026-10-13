@@ -31,7 +31,7 @@ The application is connected to the MongoDB Atlas `freelance-studio` cluster and
 ## Validation
 
 - PASS: server TypeScript build and client production build.
-- PASS: 9 unit tests and 14 integration tests (23 total, zero failures).
+- PASS: 10 unit tests and 14 integration tests (24 total, zero failures).
 - PASS: 7 Playwright browser workflows (zero failures).
 - PASS: selected automated accessibility rules on contact and owner settings forms, keyboard modal checks and 320 px mobile overflow check.
 - PASS: Git whitespace check; environment files are ignored.
@@ -40,6 +40,6 @@ Browser workflows cover contact submission, mobile chat identity, cookie login/r
 
 ## Remaining scope and limitations
 
-Real email delivery and WhatsApp work remain excluded at the user's request. Notification records do not imply email delivery. Production deployment has not been performed, and these local checks do not verify hosting or a full WCAG audit. The client build reports a bundle-size warning. Replace sample studio content/contact details before publishing. All implementation changes remain in the local `codex/complete-requirements` branch; no push or pull request was created.
+Real email delivery and WhatsApp work remain excluded at the user's request. Notification records do not imply email delivery. The application is deployed to https://wp-final-activity.vercel.app with a Vercel Function and MongoDB Atlas connection. The OpenRouter chat assistant is configured server-side. Vercel GitHub automatic deployment is pending a Vercel account GitHub login connection; source code is pushed separately to the GitHub repository. These checks are not a full WCAG audit. The client build reports a bundle-size warning. Replace sample studio content/contact details before inviting customers.
 
 See README for credentials location, database checks, test commands, and deployment configuration.

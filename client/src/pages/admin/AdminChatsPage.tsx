@@ -198,7 +198,7 @@ export const AdminChatsPage: React.FC = () => {
                 {/* Message Stream */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-background/50">
                   {activeConversation.messages.map((msg, idx) => {
-                    const isAdmin = msg.sender === 'admin';
+                    const isAdmin = msg.sender !== 'client';
                     return (
                       <div
                         key={idx}

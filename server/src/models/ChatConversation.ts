@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IChatMessage {
-  sender: 'client' | 'admin';
+  sender: 'client' | 'admin' | 'assistant';
   senderName?: string;
   message: string;
   sentAt: Date;
@@ -23,7 +23,7 @@ const ChatMessageSchema = new Schema<IChatMessage>(
   {
     sender: {
       type: String,
-      enum: ['client', 'admin'],
+      enum: ['client', 'admin', 'assistant'],
       required: true,
     },
     senderName: {

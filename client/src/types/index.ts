@@ -151,7 +151,7 @@ export interface FAQ {
 
 export interface ChatMessage {
   _id?: string;
-  sender: 'client' | 'admin';
+  sender: 'client' | 'admin' | 'assistant';
   senderName?: string;
   message: string;
   sentAt: string;

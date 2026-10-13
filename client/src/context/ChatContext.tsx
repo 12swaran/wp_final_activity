@@ -77,7 +77,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // New message arrived
             if (!isOpen) {
               const newMsgs = msgs.slice(lastMessageCountRef.current);
-              const adminMsgs = newMsgs.filter((m: ChatMessage) => m.sender === 'admin');
+              const adminMsgs = newMsgs.filter((m: ChatMessage) => m.sender !== 'client');
               if (adminMsgs.length > 0) {
                 setUnreadCount((prev) => prev + adminMsgs.length);
               }
@@ -123,9 +123,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await chatApi.initSession({ sessionId, clientName, clientEmail });
-      const newMsg = await chatApi.sendMessage(sessionId, text, clientName || undefined);
-      setMessages((prev) => [...prev, newMsg]);
-      lastMessageCountRef.current += 1;
+      await chatApi.sendMessage(sessionId, text, clientName || undefined);
+      const latest = await chatApi.getMessages(sessionId);
+      setMessages(latest);
+      lastMessageCountRef.current = latest.length;
     } catch (err) {
       console.error('[Chat] Failed to send message:', err);
       throw err;

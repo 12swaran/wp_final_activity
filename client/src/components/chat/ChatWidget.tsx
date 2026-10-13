@@ -141,7 +141,7 @@ export const ChatWidget: React.FC = () => {
           {/* Message Stream */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-background/40">
             {messages.map((msg, index) => {
-              const isAdmin = msg.sender === 'admin';
+              const isAdmin = msg.sender !== 'client';
               return (
                 <div
                   key={index}

@@ -15,6 +15,14 @@ const {
   hashToken,
 } = require('../server/dist/utils/security');
 const { validateFile } = require('../server/dist/utils/fileRules');
+const { isStudioQuestion } = require('../server/dist/services/chatAssistant');
+
+test('studio assistant refuses unrelated and mixed-topic questions', () => {
+  assert.equal(isStudioQuestion('How much does a website cost?'), true);
+  assert.equal(isStudioQuestion('What about booking?', ['How much does a website cost?']), true);
+  assert.equal(isStudioQuestion('What is the capital of France?'), false);
+  assert.equal(isStudioQuestion('What does a website cost, and what is the capital of France?'), false);
+});
 
 test('calendar validation rejects impossible dates and permits leap days', () => {
   assert.equal(validDate('2026-02-30'), false);

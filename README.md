@@ -68,13 +68,12 @@ Playwright can start the API and preview when ports 5000/5173 are free. If an ex
 
 See `IMPLEMENTATION_STATUS.md` for the final validation results and scope.
 
-## Deployment guidance
+## Vercel deployment
 
-1. Use a hosting environment that can run the Express service and serve the Vite static build over HTTPS. MongoDB must support transactions; Atlas does. Build both applications with `npm run build`.
-2. Set `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_PASSWORD`, `CLIENT_URL` and `PORT` using the hosting platform's secret/environment settings. `CLIENT_URL` must be the exact HTTPS public origin, without a trailing slash. Keep email disabled until its separate integration is approved and tested.
-3. Deploy `server/dist` and its production dependencies; start with `npm --prefix server start`. Allow only the hosting service's outbound addresses in Atlas and use the app-scoped database user. For a production workload, evaluate backup and capacity requirements rather than assuming the free development cluster is sufficient.
-4. Serve `client/dist` on the same public origin. Route `/api/*`, `/health`, `/sitemap.xml` and `/robots.txt` to Express. Route all other non-file frontend URLs to `index.html`. Keep uploaded images behind `/api/files/*`, not an unauthenticated storage directory. Forward cookie and content-type headers. Configure the reverse proxy and rate limits for the actual deployment topology.
-5. Keep TLS enabled: production cookies are Secure. Verify health, login/logout, a saved inquiry, private-file protection, simultaneous bookings, sitemap and a client tracking link after deployment. Replace seed sample content and placeholder meeting links before inviting clients.
-6. Preserve MongoDB credentials in a secret store and rotate compromised credentials; changing JWT_SECRET invalidates existing sessions. Do not include local `.env` files in uploaded artifacts or container images.
+The root `vercel.json` builds the Vite client and routes `/api/*`, `/health`, `/sitemap.xml` and `/robots.txt` to the Express Vercel Function in `api/index.ts`. Browser routes return `index.html`. The function opens a cached MongoDB connection on demand; the normal local server still uses `npm run dev`.
 
-No deployment or email/WhatsApp delivery was performed as part of this implementation.
+The Vercel project is `wp-final-activity`. Set production environment variables `MONGODB_URI`, `JWT_SECRET`, `DEFAULT_ADMIN_PASSWORD`, `DEFAULT_ADMIN_EMAIL`, `CLIENT_URL`, `OPENROUTER_API_KEY`, and optionally `OPENROUTER_MODEL`. The API key stays server-side. `CLIENT_URL` must match the exact HTTPS production origin. Real email delivery remains disabled. Deploy with `vercel --prod`; confirm `/health` returns `ok` before using the application. Atlas must allow Vercel's outbound connections. This deployment uses a database-specific read/write user and an Atlas `0.0.0.0/0` IP entry because Vercel does not provide a fixed egress IP on this plan; keep the password private and rotate it if exposed.
+
+The chatbot answers studio and website questions using published services, active pricing, FAQs, and settings in MongoDB. It refuses detected off-topic prompts and falls back to a studio follow-up message if the model is unavailable or returns an unusable answer. The free OpenRouter router may vary in quality and availability.
+
+Vercel CLI deployment does not by itself set up GitHub automatic deployments. Connect GitHub in Vercel account settings when the account has a GitHub login connection. Code is also pushed separately to `wp_final_activity` via Git.

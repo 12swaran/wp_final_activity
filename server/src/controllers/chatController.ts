@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { ChatConversation } from '../models/ChatConversation';
 import { sendSuccess, sendError } from '../utils/apiResponse';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
+import { answerStudioQuestion } from '../services/chatAssistant';
 
 export const initOrGetSession = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -89,7 +90,18 @@ export const sendClientMessage = async (req: Request, res: Response): Promise<vo
     conversation.lastMessageAt = new Date();
     await conversation.save();
 
-    sendSuccess(res, conversation.messages[conversation.messages.length - 1], 'Message sent.', 201);
+    const clientMessage = conversation.messages[conversation.messages.length - 1];
+    const recentClientMessages = conversation.messages
+      .filter((item) => item.sender === 'client')
+      .slice(-4, -1)
+      .map((item) => item.message);
+    const answer = await answerStudioQuestion(message.trim(), recentClientMessages);
+    const updated = await ChatConversation.findOneAndUpdate(
+      { sessionId },
+      { $push: { messages: { sender: 'assistant', senderName: 'Studio Assistant', message: answer, sentAt: new Date(), isRead: true } }, $set: { lastMessageAt: new Date() } },
+      { new: true, runValidators: true },
+    );
+    sendSuccess(res, { clientMessage, assistantMessage: updated?.messages[updated.messages.length - 1] }, 'Message sent.', 201);
   } catch (err: any) {
     sendError(res, err.message, 500);
   }

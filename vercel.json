@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm install --prefix server && npm install --prefix client && npm run build",
+  "outputDirectory": "client/dist",
+  "regions": ["bom1"],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index?route=/api/:path*" },
+    { "source": "/health", "destination": "/api/index?route=/health" },
+    { "source": "/sitemap.xml", "destination": "/api/index?route=/sitemap.xml" },
+    { "source": "/robots.txt", "destination": "/api/index?route=/robots.txt" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
