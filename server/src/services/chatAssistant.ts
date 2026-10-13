@@ -18,15 +18,33 @@ export function isStudioQuestion(message: string, recentClientMessages: string[]
 
 export async function answerStudioQuestion(message: string, recentClientMessages: string[] = []): Promise<string> {
   if (!isStudioQuestion(message, recentClientMessages)) return OFF_TOPIC;
-  if (!process.env.OPENROUTER_API_KEY) return UNAVAILABLE;
+  let fallback = UNAVAILABLE;
 
   try {
     const [services, plans, faqs, settings] = await Promise.all([
-      Service.find({ isPublished: true }).select('name description').limit(20).lean(),
+      Service.find({ isPublished: true }).select('title shortDescription').limit(20).lean(),
       PricingPlan.find({ isActive: true }).select('name price billingCycle description features').limit(12).lean(),
       FAQ.find({ isActive: true }).select('question answer').limit(25).lean(),
       Setting.findOne().select('siteName tagline contactEmail businessHours timeZone').lean(),
     ]);
+    fallback = (() => {
+      if (/\b(prices?|pricing|costs?|budgets?|packages?|plans?)\b/i.test(message) && plans.length)
+        return `Current website packages: ${plans.map((plan) => `${plan.name} ($${plan.price}, ${plan.billingCycle})`).join('; ')}. See the Pricing page or request a quotation for your project.`;
+      if (/\b(timelines?|delivery|how long)\b/i.test(message)) {
+        const delivery = faqs.find((faq) => /how long|deliver/i.test(faq.question));
+        if (delivery) return delivery.answer;
+      }
+      if (/\b(bookings?|appointments?|consultations?)\b/i.test(message))
+        return 'You can choose an available consultation time on the Booking page. The studio will confirm project details with you there.';
+      if (/\b(quotes?|quotations?|proposals?)\b/i.test(message))
+        return 'You can describe your website project and request a quotation on the Quote page. The studio will review the details.';
+      if (/\b(contact|email)\b/i.test(message) && settings?.contactEmail)
+        return `You can contact the studio at ${settings.contactEmail} or use the Contact page.`;
+      if (services.length)
+        return `Our published website services include ${services.map((service) => service.title).join(', ')}. Tell me which service or project you are interested in, or see the Services page for details.`;
+      return UNAVAILABLE;
+    })();
+    if (!process.env.OPENROUTER_API_KEY) return fallback;
     const facts = JSON.stringify({ services, plans, faqs, settings }).slice(0, 14000);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12000);
@@ -53,12 +71,12 @@ export async function answerStudioQuestion(message: string, recentClientMessages
     } finally {
       clearTimeout(timeout);
     }
-    if (!response.ok) return UNAVAILABLE;
+    if (!response.ok) return fallback;
     const body = await response.json() as { choices?: Array<{ message?: { content?: unknown } }> };
     const content = body.choices?.[0]?.message?.content;
-    if (typeof content !== 'string' || content.trim().length < 25 || /^(?:user safety|safe|unsafe|yes|no)\s*:/i.test(content.trim()) || /\b(?:capital of|weather forecast|recipe for|sports? scores?)\b/i.test(content)) return UNAVAILABLE;
+    if (typeof content !== 'string' || content.trim().length < 25 || /^(?:user safety|safe|unsafe|yes|no)\s*:/i.test(content.trim()) || /\b(?:capital of|weather forecast|recipe for|sports? scores?)\b/i.test(content)) return fallback;
     return content.trim().slice(0, 1500);
   } catch {
-    return UNAVAILABLE;
+    return fallback;
   }
 }

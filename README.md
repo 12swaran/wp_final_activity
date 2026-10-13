@@ -74,6 +74,7 @@ The root `vercel.json` builds the Vite client and routes `/api/*`, `/health`, `/
 
 The Vercel project is `wp-final-activity`. Set production environment variables `MONGODB_URI`, `JWT_SECRET`, `DEFAULT_ADMIN_PASSWORD`, `DEFAULT_ADMIN_EMAIL`, `CLIENT_URL`, `OPENROUTER_API_KEY`, and optionally `OPENROUTER_MODEL`. The API key stays server-side. `CLIENT_URL` must match the exact HTTPS production origin. Real email delivery remains disabled. Deploy with `vercel --prod`; confirm `/health` returns `ok` before using the application. Atlas must allow Vercel's outbound connections. This deployment uses a database-specific read/write user and an Atlas `0.0.0.0/0` IP entry because Vercel does not provide a fixed egress IP on this plan; keep the password private and rotate it if exposed.
 
-The chatbot answers studio and website questions using published services, active pricing, FAQs, and settings in MongoDB. It refuses detected off-topic prompts and falls back to a studio follow-up message if the model is unavailable or returns an unusable answer. The free OpenRouter router may vary in quality and availability.
+The chatbot answers studio and website questions using published services, active pricing, FAQs, and settings in MongoDB. It refuses detected off-topic prompts and falls back to published services, active prices, relevant FAQs, or booking and quotation guidance when the model is unavailable or returns an unusable answer. The free OpenRouter router may vary in quality and availability.
 
 Vercel CLI deployment does not by itself set up GitHub automatic deployments. Connect GitHub in Vercel account settings when the account has a GitHub login connection. Code is also pushed separately to `wp_final_activity` via Git.
+
