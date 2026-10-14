@@ -146,7 +146,7 @@ export const chatApi = {
 };
 
 export const dashboardApi = {
-  getStats: () => api.get('/dashboard/stats').then((res) => res.data.data),
+  getStats: () => api.get('/dashboard/stats', { timeout: 30000 }).then((res) => res.data.data),
 };
 
 export const settingsApi = {

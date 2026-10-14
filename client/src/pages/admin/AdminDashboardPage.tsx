@@ -20,19 +20,36 @@ import { dashboardApi } from '../../services/api';
 export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const loadStats = () => {
+    setLoading(true);
+    setError(false);
     dashboardApi
       .getStats()
       .then((data) => setStats(data))
-      .catch((err) => console.error(err))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadStats();
   }, []);
 
   if (loading) {
     return (
       <div className="py-20 text-center text-xs text-muted-foreground animate-pulse">
         Aggregating database statistics...
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div role="alert" className="rounded-2xl border border-amber-400/30 bg-card p-8 text-center">
+        <h1 className="text-lg font-semibold text-white">Dashboard data is taking longer to load</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Your requests are still stored. Please retry the live database summary.</p>
+        <button type="button" onClick={loadStats} className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">Retry dashboard</button>
       </div>
     );
   }
@@ -86,11 +103,11 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
           <div>
             <div className="font-display text-3xl font-bold text-white">
-              ${kpi?.quotations.pipelineValue?.toLocaleString() || 0}
+              {kpi.quotations.total}
             </div>
             <div className="mt-2 flex items-center justify-between text-xs">
               <span className="text-muted-foreground text-[11px]">
-                {kpi?.quotations.total || 0} requests ({kpi?.quotations.new || 0} new)
+                {kpi.quotations.new} new requests · ${kpi.quotations.pipelineValue.toLocaleString()} estimated
               </span>
               <Link to="/admin/quotations" className="text-primary hover:underline text-[11px]">
                 Pipeline →
@@ -179,7 +196,7 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Two Column Activity Tables */}
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-3">
         {/* Latest Inquiries Table */}
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
@@ -223,6 +240,28 @@ export const AdminDashboardPage: React.FC = () => {
               No inquiries logged yet.
             </p>
           )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-white">
+              <FileSpreadsheet className="h-4 w-4 text-amber-400" /> Latest Quotation Requests
+            </h2>
+            <Link to="/admin/quotations" className="text-xs text-primary hover:underline">View all</Link>
+          </div>
+          {activity?.quotations.length ? (
+            <div className="divide-y divide-border/60">
+              {activity.quotations.map((quote) => (
+                <Link key={quote._id} to="/admin/quotations" className="flex items-center justify-between gap-3 py-3 text-xs hover:text-primary">
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-white">{quote.name}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">{quote.projectType} · {quote.email}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{quote.status}</span>
+                </Link>
+              ))}
+            </div>
+          ) : <p className="py-6 text-center text-xs text-muted-foreground">No quotation requests yet.</p>}
         </div>
 
         {/* Upcoming Appointments */}
